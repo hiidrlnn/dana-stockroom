@@ -1,0 +1,9 @@
+{
+  "app": {
+    "[project]/src/app/(with-layout)/dashboard/page": [],
+    "[project]/src/app/page": []
+  },
+  "appUsingSizeAdjust": false,
+  "pages": {},
+  "pagesUsingSizeAdjust": false
+}
