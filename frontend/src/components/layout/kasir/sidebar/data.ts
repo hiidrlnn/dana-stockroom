@@ -6,6 +6,7 @@ import {
   Settings,
   ShoppingCart,
 } from "lucide-react";
+import { FourCircle } from "../../sidebar/icons";
 
 export const KASIR_MENU = [
   {
@@ -18,6 +19,12 @@ export const KASIR_MENU = [
     title: "Transaksi Penjualan",
     url: "/transaksi-penjualan-kasir",
     icon: ShoppingCart,
+  },
+
+    {
+    title: "Daftar Stock Produk",
+    url: "/daftar-stock-produk-kasir",
+    icon: FourCircle,
   },
 
   {

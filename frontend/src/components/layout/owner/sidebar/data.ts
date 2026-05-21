@@ -15,12 +15,6 @@ export const OWNER_MENU = [
   },
 
   {
-    title: "Laporan",
-    url: "/laporan-owner",
-    icon: BarChart3,
-  },
-
-  {
     title: "Monitoring",
     url: "/monitoring-owner",
     icon: ShieldCheck,
@@ -33,14 +27,9 @@ export const OWNER_MENU = [
   },
 
   {
-    title: "Riwayat Transaksi",
-    url: "/riwayat-transaksi-owner",
-    icon: ClipboardList,
-  },
-
-  {
     title: "Pengaturan Akun",
     url: "/pengaturan-akun-owner",
     icon: Settings,
   },
 ];
+
