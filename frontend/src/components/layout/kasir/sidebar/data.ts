@@ -1,12 +1,10 @@
 import {
-  Briefcase,
-  History,
+  ClipboardList,
   LayoutDashboard,
   Receipt,
   Settings,
   ShoppingCart,
 } from "lucide-react";
-import { FourCircle } from "../../sidebar/icons";
 
 export const KASIR_MENU = [
   {
@@ -21,22 +19,10 @@ export const KASIR_MENU = [
     icon: ShoppingCart,
   },
 
-    {
-    title: "Daftar Stock Produk",
-    url: "/daftar-stock-produk-kasir",
-    icon: FourCircle,
-  },
-
-  {
-    title: "Input Jasa",
-    url: "/input-jasa-kasir",
-    icon: Briefcase,
-  },
-
   {
     title: "Riwayat Transaksi",
     url: "/riwayat-transaksi-kasir",
-    icon: History,
+    icon: ClipboardList,
   },
 
   {

@@ -14,7 +14,7 @@ export const NAV_DATA = [
     items: [
       {
         title: "Dashboard",
-        url: "/dashboard",
+        url: "/dashboard-admin",
         icon: HomeIcon,
         items: [],
       },

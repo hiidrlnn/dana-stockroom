@@ -3,13 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 
 import {
-  Bell,
   ChevronDown,
   Lock,
   LogOut,
   Menu,
   Moon,
-  Search,
   Settings,
   Sun,
   User,
@@ -108,43 +106,6 @@ export function KasirHeader({
             ">
             <Menu size={20} />
           </button>
-
-          <div className="relative hidden md:block">
-            <Search
-              size={18}
-              className="
-                absolute
-                left-4
-                top-1/2
-                -translate-y-1/2
-                text-gray-400
-              "
-            />
-
-            <input
-              type="text"
-              placeholder="Cari menu..."
-              className="
-                w-[280px]
-                rounded-2xl
-                border
-                border-gray-200
-                bg-gray-100
-                py-3
-                pl-12
-                pr-4
-                text-slate-900
-                outline-none
-                transition
-                placeholder:text-gray-500
-                focus:border-sky-500
-
-                dark:border-white/10
-                dark:bg-[#1E293B]
-                dark:text-white
-              "
-            />
-          </div>
         </div>
 
         {/* RIGHT */}
@@ -208,28 +169,6 @@ export function KasirHeader({
               </button>
             </div>
           )}
-
-          {/* NOTIF */}
-          <button
-            className="
-              relative
-              flex
-              h-12
-              w-12
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-gray-200
-              bg-gray-100
-
-              dark:border-white/10
-              dark:bg-[#0B1120]
-            ">
-            <Bell size={20} />
-
-            <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-red-500" />
-          </button>
 
           {/* PROFILE */}
           <div

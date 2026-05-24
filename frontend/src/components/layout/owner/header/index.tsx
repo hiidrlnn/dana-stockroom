@@ -2,13 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  Bell,
   ChevronDown,
   Lock,
   LogOut,
   Menu,
   Moon,
-  Search,
   Settings,
   Sun,
   User,
@@ -66,68 +64,31 @@ export function OwnerHeader({
         dark:bg-[#0F172A]
       ">
       <div className="flex items-center justify-between gap-5">
-        {/* LEFT SECTION */}
-        <div className="flex items-center gap-4">
-          <button
-            onClick={onMenuClick}
-            className="
-              flex
-              h-11
-              w-11
-              items-center
-              justify-center
-              rounded-xl
-              bg-gray-100
-              text-slate-900
-              transition
-              hover:bg-gray-200
+      {/* LEFT */}
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={onMenuClick}
+                  className="
+                    flex
+                    h-11
+                    w-11
+                    items-center
+                    justify-center
+                    rounded-xl
+                    bg-gray-100
+                    text-slate-900
+                    transition
+                    hover:bg-gray-200
 
-              dark:bg-white/5
-              dark:text-white
-              dark:hover:bg-white/10
+                    dark:bg-white/5
+                    dark:text-white
+                    dark:hover:bg-white/10
 
-              xl:hidden
-            ">
-            <Menu size={20} />
-          </button>
-
-          <div className="relative hidden md:block">
-            <Search
-              size={18}
-              className="
-                absolute
-                left-4
-                top-1/2
-                -translate-y-1/2
-                text-gray-400
-              "
-            />
-
-            <input
-              type="text"
-              placeholder="Cari menu..."
-              className="
-                w-[280px]
-                rounded-2xl
-                border
-                border-gray-200
-                bg-gray-100
-                py-3
-                pl-12
-                pr-4
-                text-slate-900
-                outline-none
-                transition
-                placeholder:text-gray-500
-                focus:border-sky-500
-
-                dark:border-white/10
-                dark:bg-[#1E293B]
-                dark:text-white
-              "
-            />
-          </div>
-        </div>
+                    xl:hidden
+                  ">
+                  <Menu size={20} />
+                </button>
+              </div>
 
         {/* RIGHT SECTION */}
         <div className="flex items-center gap-4">
@@ -186,27 +147,6 @@ export function OwnerHeader({
               </button>
             </div>
           )}
-
-          {/* NOTIFICATION BELL */}
-          <button
-            className="
-              relative
-              flex
-              h-12
-              w-12
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-gray-200
-              bg-gray-100
-
-              dark:border-white/10
-              dark:bg-[#0B1120]
-            ">
-            <Bell size={20} />
-            <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-red-500" />
-          </button>
 
           {/* PROFILE ACCORDING TO USER ROLE */}
           <div className="relative" ref={dropdownRef}>
@@ -308,12 +248,6 @@ export function OwnerHeader({
                     href="/pengaturan-akun-owner"
                     icon={<Settings size={18} />}
                     label="Pengaturan Akun"
-                  />
-
-                  <DropdownItem
-                    href="/ganti-password-owner"
-                    icon={<Lock size={18} />}
-                    label="Ganti Password"
                   />
 
                   <button

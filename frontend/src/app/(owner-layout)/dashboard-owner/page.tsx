@@ -5,12 +5,14 @@ import StatisticCards from "@/components/dashboard/owner/statistic-cards";
 import QuickAction from "@/components/dashboard/owner/quick-action";
 import RecentActivity from "@/components/dashboard/owner/recent-activity";
 import SalesChart from "@/components/dashboard/owner/sales-chart";
+import { MaintenanceAlert } from "@/components/dashboard/owner/maintenance-alert";
 
 export default function DashboardOwnerPage() {
   return (
     <div className="space-y-6 p-6">
       {/* HEADER JUDUL */}
       <div>
+        <MaintenanceAlert />
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
           Dashboard Owner
         </h1>

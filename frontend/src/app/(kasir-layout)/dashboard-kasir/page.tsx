@@ -1,6 +1,7 @@
+import { CompactJasaForm } from "@/components/dashboard/kasir/compact-jasa-form";
+import { ProductStockTable } from "@/components/dashboard/kasir/product-stock-table";
 import { QuickAction } from "@/components/dashboard/kasir/quick-action";
 import { RecentTransaction } from "@/components/dashboard/kasir/recent-transaction";
-import { SalesChart } from "@/components/dashboard/kasir/sales-chart";
 import { StatisticCards } from "@/components/dashboard/kasir/statistic-cards";
 
 export default function DashboardKasirPage() {
@@ -8,7 +9,7 @@ export default function DashboardKasirPage() {
     <div className="space-y-6">
       {/* HEADER */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
           Dashboard Kasir
         </h1>
 
@@ -23,16 +24,14 @@ export default function DashboardKasirPage() {
       {/* QUICK ACTION */}
       <QuickAction />
 
-      {/* GRID */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-        <div className="xl:col-span-7">
-          <RecentTransaction />
-        </div>
+      {/* STOCK PRODUK */}
+      <ProductStockTable />
 
-        <div className="xl:col-span-5">
-          <SalesChart />
-        </div>
-      </div>
+      {/* TRANSAKSI HARI INI */}
+      <RecentTransaction />
+
+      {/* INPUT JASA CEPAT */}
+      <CompactJasaForm />
     </div>
   );
 }

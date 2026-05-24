@@ -1,7 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 
 import { KASIR_MENU } from "./data";
 
@@ -15,6 +18,21 @@ export function KasirSidebar({
   onClose,
 }: Props) {
   const pathname = usePathname();
+
+  const { theme } = useTheme();
+
+  const [mounted, setMounted] =
+    useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const logoSrc =
+    mounted &&
+    theme === "dark"
+      ? "/images/logo/dana-stockroom-logo-white.png"
+      : "/images/logo/dana-stockroom-logo-dark.png";
 
   return (
     <>
@@ -59,44 +77,61 @@ export function KasirSidebar({
             border-b
             border-gray-200
             p-6
-
             dark:border-white/10
           ">
-          <h1
-            className="
-              text-2xl
-              font-bold
-              text-slate-900
+          <div className="flex flex-col items-center text-center">
+            <Link
+              href="/dashboard-kasir"
+              className="flex flex-col items-center">
+              <Image
+                src={logoSrc}
+                alt="Dana Stockroom"
+                width={95}
+                height={95}
+                priority
+                className="mb-4 object-contain"
+              />
 
-              dark:text-white
-            ">
-            DANA
-            <span className="text-sky-500">
-              STOCKROOM
-            </span>
-          </h1>
+              <h1
+                className="
+                  text-2xl
+                  font-extrabold
+                  tracking-wide
+                  text-slate-900
 
-          <p
-            className="
-              mt-2
-              text-xs
-              uppercase
-              tracking-[4px]
-              text-gray-500
+                  dark:text-white
+                ">
+                DANA
+                <span className="text-sky-500">
+                  STOCKROOM
+                </span>
+              </h1>
 
-              dark:text-gray-400
-            ">
-            Dashboard Kasir
-          </p>
+              <p
+                className="
+                  mt-3
+                  text-[10px]
+                  font-medium
+                  uppercase
+                  tracking-[4px]
+                  text-gray-500
+
+                  dark:text-gray-400
+                ">
+                Dashboard Kasir
+              </p>
+            </Link>
+          </div>
         </div>
 
         {/* MENU */}
-        <nav className="flex-1 space-y-2 p-4">
+        <nav className="flex-1 space-y-2 overflow-y-auto p-4">
           {KASIR_MENU.map((item) => {
             const active =
               pathname === item.url;
 
-            const Icon = item.icon;
+            const Icon =
+              item.icon;
 
             return (
               <Link
@@ -131,7 +166,9 @@ export function KasirSidebar({
                 `}>
                 <Icon className="h-5 w-5 shrink-0" />
 
-                <span>{item.title}</span>
+                <span>
+                  {item.title}
+                </span>
               </Link>
             );
           })}
@@ -172,8 +209,9 @@ export function KasirSidebar({
 
                 dark:text-gray-400
               ">
-              Dashboard kasir untuk transaksi
-              penjualan dan jasa.
+              Dashboard kasir untuk
+              transaksi penjualan dan
+              jasa.
             </p>
           </div>
         </div>

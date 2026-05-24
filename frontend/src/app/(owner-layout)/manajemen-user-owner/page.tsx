@@ -6,7 +6,7 @@ import { Users, Search, UserPlus, Shield, Mail, Phone, Trash2, Edit } from "luci
 // Data dummy daftar user / karyawan toko Dana Stockroom
 const initialUsers = [
   { id: 1, name: "Dirlan Syah", email: "dirlan@danastockroom.com", role: "Kasir", phone: "081234567891", status: "Aktif" },
-  { id: 2, name: "Andi Wijaya", email: "andi.gudang@danastockroom.com", role: "Gudang", phone: "085712345678", status: "Aktif" },
+  { id: 2, name: "Andi Wijaya", email: "andi.gudang@danastockroom.com", role: "Admin", phone: "085712345678", status: "Aktif" },
   { id: 3, name: "Budi Santoso", email: "budi.admin@danastockroom.com", role: "Admin", phone: "089987654321", status: "Non-Aktif" },
 ];
 
@@ -66,7 +66,7 @@ export default function ManajemenUserOwnerPage() {
             <option value="Semua">Semua Role</option>
             <option value="Admin">Admin</option>
             <option value="Kasir">Kasir</option>
-            <option value="Gudang">Gudang</option>
+            <option value="Admin">Admin</option>
           </select>
         </div>
       </div>
