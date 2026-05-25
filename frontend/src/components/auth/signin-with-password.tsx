@@ -12,8 +12,8 @@ export default function SigninWithPassword({ role }: Props) {
   const router = useRouter();
 
   const [showPassword, setShowPassword] = useState(false);
-
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
     email: "",
@@ -32,17 +32,60 @@ export default function SigninWithPassword({ role }: Props) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    setError("");
     setLoading(true);
 
-    setTimeout(() => {
-      router.push("/dashboard");
-    }, 1200);
+    const formattedRole = role.charAt(0).toUpperCase() + role.slice(1);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          role: formattedRole,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Gagal masuk ke dalam sistem.");
+      }
+
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      const targetRole = role.toLowerCase();
+      if (targetRole === "admin") {
+        router.push("/dashboard-admin");
+      } else if (targetRole === "kasir") {
+        router.push("/dashboard-kasir");
+      } else if (targetRole === "owner") {
+        router.push("/dashboard-owner");
+      } else {
+        router.push("/dashboard");
+      }
+      
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* EMAIL */}
+      {error && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-center text-sm text-red-500 dark:text-red-400">
+          {error}
+        </div>
+      )}
+
       <div>
         <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
           Email
@@ -82,7 +125,6 @@ export default function SigninWithPassword({ role }: Props) {
         </div>
       </div>
 
-      {/* PASSWORD */}
       <div>
         <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
           Password
@@ -141,7 +183,6 @@ export default function SigninWithPassword({ role }: Props) {
         </div>
       </div>
 
-      {/* REMEMBER */}
       <div className="flex items-center justify-between">
         <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
           <input
@@ -153,17 +194,17 @@ export default function SigninWithPassword({ role }: Props) {
           />
           <div
             className="
-      flex h-5 w-5 items-center justify-center
-      rounded border border-gray-400
-      bg-white
-      transition
+          flex h-5 w-5 items-center justify-center
+          rounded border border-gray-400
+          bg-white
+          transition
 
-      peer-checked:border-sky-500
-      peer-checked:bg-sky-500
+          peer-checked:border-sky-500
+          peer-checked:bg-sky-500
 
-      dark:border-white/20
-      dark:bg-[#1A2336]
-    ">
+          dark:border-white/20
+          dark:bg-[#1A2336]
+        ">
             {formData.remember && (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -190,7 +231,6 @@ export default function SigninWithPassword({ role }: Props) {
         </button>
       </div>
 
-      {/* BUTTON */}
       <button
         type="submit"
         disabled={loading}
@@ -203,8 +243,10 @@ export default function SigninWithPassword({ role }: Props) {
 
         hover:bg-sky-400
         disabled:opacity-70
+        disabled:cursor-not-allowed
+        capitalize
         ">
-        {loading ? "Loading..." : `Masuk Sebagai ${role}`}
+        {loading ? "Memverifikasi..." : `Masuk Sebagai ${role}`}
       </button>
     </form>
   );
