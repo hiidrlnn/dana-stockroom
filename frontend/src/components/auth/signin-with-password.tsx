@@ -57,7 +57,7 @@ export default function SigninWithPassword({ role }: Props) {
         throw new Error(data.message || "Gagal masuk ke dalam sistem.");
       }
 
-      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("auth_token", data.access_token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
       const targetRole = role.toLowerCase();
