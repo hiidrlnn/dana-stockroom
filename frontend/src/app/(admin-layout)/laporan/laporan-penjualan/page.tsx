@@ -126,7 +126,7 @@ export default function LaporanPenjualanPage() {
         {/* TRANSAKSI */}
         <Card className="border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Total Transaksi
+            Total Modal
           </p>
 
           <h2 className="mt-3 text-3xl font-bold text-gray-900 dark:text-white">
@@ -136,7 +136,7 @@ export default function LaporanPenjualanPage() {
 
         {/* PENDING */}
         <Card className="border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Pending</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total Omset</p>
 
           <h2 className="mt-3 text-3xl font-bold text-yellow-500">
             {totalPending}

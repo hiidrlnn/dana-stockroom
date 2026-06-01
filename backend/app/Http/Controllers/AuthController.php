@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -13,13 +13,13 @@ class AuthController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:6',
-            'role' => 'required|in:Admin,Kasir,Owner'
+            'role' => 'required|in:Admin,Kasir,Owner',
         ]);
 
         $user = User::create([
-            'nama' => $request->nama,
+            'name' => $request->nama,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
@@ -29,50 +29,76 @@ class AuthController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Registrasi akun berhasil! Silakan login.',
-            'user' => $user
+            'user' => [
+                'id' => $user->id,
+                'nama' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'status' => $user->status,
+            ]
         ], 201);
     }
 
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|string|email',
+            'email' => 'required|email',
             'password' => 'required|string',
-            'role' => 'required|string'
+            'role' => 'required|in:Admin,Kasir,Owner',
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        // cek email + password
+        if (!Auth::attempt([
+            'email' => $request->email,
+            'password' => $request->password
+        ])) {
             return response()->json([
+                'status' => 'error',
                 'message' => 'Email atau password salah!'
             ], 401);
         }
 
-        $user = User::where('email', $request->email)->firstOrFail();
+        $user = User::where(
+            'email',
+            $request->email
+        )->first();
 
-        if (strtolower($user->role) !== strtolower($request->role)) {
+        // cek role
+        if (
+            strtolower($user->role) !==
+            strtolower($request->role)
+        ) {
             return response()->json([
+                'status' => 'error',
                 'message' => 'Akses ditolak! Role akun tidak sesuai.'
             ], 403);
         }
 
+        // cek status akun
         if ($user->status !== 'Aktif') {
             return response()->json([
+                'status' => 'error',
                 'message' => 'Akun Anda dinonaktifkan.'
             ], 403);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // buat token sanctum
+        $token = $user
+            ->createToken('auth_token')
+            ->plainTextToken;
 
         return response()->json([
             'status' => 'success',
             'message' => 'Login berhasil',
             'access_token' => $token,
             'token_type' => 'Bearer',
+
             'user' => [
                 'id' => $user->id,
-                'nama' => $user->nama,
+                'nama' => $user->name,
                 'email' => $user->email,
-                'role' => $user->role
+                'role' => $user->role,
+                'status' => $user->status,
             ]
         ]);
     }
