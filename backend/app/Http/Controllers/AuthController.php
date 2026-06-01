@@ -50,11 +50,11 @@ class AuthController extends Controller
         // cek email + password
         if (!Auth::attempt([
             'email' => $request->email,
-            'password' => $request->password
+            'password' => $request->password,
         ])) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Email atau password salah!'
+                'message' => 'Email atau password salah!',
             ], 401);
         }
 
@@ -63,14 +63,14 @@ class AuthController extends Controller
             $request->email
         )->first();
 
-        // cek role
+        // cek role akun
         if (
             strtolower($user->role) !==
             strtolower($request->role)
         ) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Akses ditolak! Role akun tidak sesuai.'
+                'message' => 'Akses ditolak! Role akun tidak sesuai.',
             ], 403);
         }
 
@@ -78,7 +78,7 @@ class AuthController extends Controller
         if ($user->status !== 'Aktif') {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Akun Anda dinonaktifkan.'
+                'message' => 'Akun Anda dinonaktifkan.',
             ], 403);
         }
 
