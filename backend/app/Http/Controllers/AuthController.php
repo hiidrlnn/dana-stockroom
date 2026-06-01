@@ -18,7 +18,8 @@ class AuthController extends Controller
             'role' => 'required|in:Admin,Kasir,Owner',
         ]);
 
-        $user = User::create([
+                $user = User::create([
+            'nama' => $request->nama,
             'name' => $request->nama,
             'email' => $request->email,
             'password' => Hash::make($request->password),
@@ -31,7 +32,7 @@ class AuthController extends Controller
             'message' => 'Registrasi akun berhasil! Silakan login.',
             'user' => [
                 'id' => $user->id,
-                'nama' => $user->name,
+                'nama' => $user->nama,
                 'email' => $user->email,
                 'role' => $user->role,
                 'status' => $user->status,
@@ -47,7 +48,6 @@ class AuthController extends Controller
             'role' => 'required|in:Admin,Kasir,Owner',
         ]);
 
-        // cek email + password
         if (!Auth::attempt([
             'email' => $request->email,
             'password' => $request->password,
@@ -63,7 +63,6 @@ class AuthController extends Controller
             $request->email
         )->first();
 
-        // cek role akun
         if (
             strtolower($user->role) !==
             strtolower($request->role)
@@ -74,7 +73,6 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // cek status akun
         if ($user->status !== 'Aktif') {
             return response()->json([
                 'status' => 'error',
@@ -82,7 +80,6 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // buat token sanctum
         $token = $user
             ->createToken('auth_token')
             ->plainTextToken;
@@ -95,7 +92,7 @@ class AuthController extends Controller
 
             'user' => [
                 'id' => $user->id,
-                'nama' => $user->name,
+                'nama' => $user->nama,
                 'email' => $user->email,
                 'role' => $user->role,
                 'status' => $user->status,
