@@ -1,107 +1,99 @@
-export function ProductStockTable() {
-  const products = [
-    {
-      name: "Air Force 1",
-      brand: "Nike",
-      size: 42,
-      stock: 12,
-      price: "Rp 1.850.000",
-    },
-    {
-      name: "Samba",
-      brand: "Adidas",
-      size: 41,
-      stock: 8,
-      price: "Rp 1.650.000",
-    },
-    {
-      name: "530",
-      brand: "New Balance",
-      size: 43,
-      stock: 5,
-      price: "Rp 2.100.000",
-    },
-  ];
+"use client";
+
+import { useState } from "react";
+
+interface Product {
+  id: number;
+  nama: string;
+  kategori: string;
+  size: string;
+  stok: number;
+  harga_jual: number;
+}
+
+interface ProductStockTableProps {
+  products: Product[];
+  isLoading: boolean;
+}
+
+export function ProductStockTable({ products, isLoading }: ProductStockTableProps) {
+  const [search, setSearch] = useState("");
+
+  // Logika Filter Produk
+  const filteredProducts = products.filter((p) =>
+    p.nama.toLowerCase().includes(search.toLowerCase()) ||
+    p.kategori.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div
-      className="
-        rounded-3xl
-        border
-        border-gray-200
-        bg-white
-        p-6
-        shadow-sm
-
-        dark:border-white/10
-        dark:bg-[#0F172A]
-      ">
-      <div className="mb-5 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-          Produk Tersedia
-        </h2>
-
-        <span className="text-sm text-gray-500">
-          {products.length} produk
-        </span>
+    <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#0F172A]">
+      {/* Header dengan Pencarian */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            Produk Tersedia
+          </h2>
+        </div>
+        
+        <input
+          type="text"
+          placeholder="Cari produk atau kategori..."
+          className="px-4 py-2 rounded-xl border border-gray-200 bg-slate-50 dark:bg-[#1E293B] dark:border-white/10 dark:text-white text-sm"
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[700px]">
-          <thead>
-            <tr className="border-b border-gray-200 dark:border-white/10">
-              <th className="py-4 text-left text-gray-500">
-                Produk
-              </th>
-
-              <th className="text-left text-gray-500">
-                Merk
-              </th>
-
-              <th className="text-left text-gray-500">
-                Size
-              </th>
-
-              <th className="text-left text-gray-500">
-                Stock
-              </th>
-
-              <th className="text-left text-gray-500">
-                Harga
-              </th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {products.map(
-              (product, index) => (
+        {isLoading ? (
+          <div className="flex h-40 items-center justify-center text-gray-500">
+            <span className="animate-pulse">Memuat data real-time...</span>
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="py-10 text-center text-gray-500 italic">
+            Produk tidak ditemukan.
+          </div>
+        ) : (
+          <table className="w-full min-w-[700px]">
+            <thead>
+              <tr className="border-b border-gray-200 dark:border-white/10">
+                <th className="py-4 text-left text-sm font-semibold text-gray-500">Produk</th>
+                <th className="py-4 text-left text-sm font-semibold text-gray-500">Kategori</th>
+                <th className="py-4 text-left text-sm font-semibold text-gray-500">Size</th>
+                <th className="py-4 text-left text-sm font-semibold text-gray-500">Stock</th>
+                <th className="py-4 text-left text-sm font-semibold text-gray-500">Harga</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredProducts.map((product) => (
                 <tr
-                  key={index}
-                  className="border-b border-gray-100 dark:border-white/5">
-                  <td className="py-5 font-semibold text-slate-900 dark:text-white">
-                    {product.name}
+                  key={product.id}
+                  className="border-b border-gray-100 transition-colors hover:bg-slate-50 dark:border-white/5 dark:hover:bg-white/5"
+                >
+                  <td className="py-4 font-semibold text-slate-900 dark:text-white">
+                    {product.nama}
                   </td>
-
-                  <td>
-                    {product.brand}
+                  <td className="py-4 text-gray-600 dark:text-gray-300">
+                    {product.kategori}
                   </td>
-
-                  <td>
+                  <td className="py-4 text-gray-600 dark:text-gray-300">
                     {product.size}
                   </td>
-
-                  <td>
-                    {product.stock}
+                  <td className="py-4">
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      product.stok <= 0 ? 'bg-red-100 text-red-800' : 
+                      product.stok < 5 ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
+                    }`}>
+                      {product.stok > 0 ? product.stok : "Habis"}
+                    </span>
                   </td>
-
-                  <td className="font-semibold">
-                    {product.price}
+                  <td className="py-4 font-semibold text-slate-900 dark:text-white">
+                    Rp {product.harga_jual.toLocaleString("id-ID")}
                   </td>
                 </tr>
-              ),
-            )}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

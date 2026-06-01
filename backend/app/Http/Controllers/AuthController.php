@@ -18,12 +18,15 @@ class AuthController extends Controller
             'role' => 'required|in:Admin,Kasir,Owner'
         ]);
 
+        // Kita mengisi 'name' dengan 'nama' untuk memenuhi kebutuhan sistem Laravel
+        // Dan mengisi 'nama' untuk kebutuhan aplikasi custom kamu
         $user = User::create([
-            'nama' => $request->nama,
-            'email' => $request->email,
+            'name'     => $request->nama, 
+            'nama'     => $request->nama,
+            'email'    => $request->email,
             'password' => Hash::make($request->password),
-            'role' => $request->role,
-            'status' => 'Aktif',
+            'role'     => $request->role,
+            'status'   => 'Aktif',
         ]);
 
         return response()->json([
@@ -41,6 +44,7 @@ class AuthController extends Controller
             'role' => 'required|string'
         ]);
 
+        // Auth::attempt menggunakan email dan password untuk verifikasi
         if (!Auth::attempt($request->only('email', 'password'))) {
             return response()->json([
                 'message' => 'Email atau password salah!'
@@ -49,12 +53,14 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->firstOrFail();
 
+        // Validasi Role
         if (strtolower($user->role) !== strtolower($request->role)) {
             return response()->json([
                 'message' => 'Akses ditolak! Role akun tidak sesuai.'
             ], 403);
         }
 
+        // Validasi Status Akun
         if ($user->status !== 'Aktif') {
             return response()->json([
                 'message' => 'Akun Anda dinonaktifkan.'
