@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
-use App\Models\TransactionDetail; // Pastikan model detail ada
+use App\Models\TransactionDetail;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,51 +13,59 @@ class TransactionController extends Controller
 {
     public function index()
     {
-        // Mengambil transaksi dengan relasi jika diperlukan
-        $transactions = Transaction::latest()->take(10)->get();
-        return response()->json($transactions, 200);
+        // Mengambil transaksi terbaru dengan detailnya
+        // Pastikan relasi 'details' ada di Model Transaction
+        return Transaction::with('details')->latest()->take(10)->get();
     }
 
     public function store(Request $request)
     {
+        // Validasi diperbarui: menambahkan jasa_name sebagai opsional
         $request->validate([
-            'customer_name' => 'required|string|max:255',
+            'customer_name' => 'nullable|string|max:255',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_id' => 'nullable|exists:products,id',
+            'items.*.jasa_name' => 'nullable|string|max:255', // Validasi untuk jasa_name
             'items.*.quantity' => 'required|integer|min:1',
+            'items.*.price' => 'required|numeric',
+            'type' => 'required|in:produk,jasa',
             'total' => 'required|numeric|min:0',
         ]);
 
         try {
             DB::beginTransaction();
 
-            // 1. Simpan Transaksi Utama
             $invoiceNumber = 'INV-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -5));
             
+            // 1. Simpan Transaksi Utama
             $transaction = Transaction::create([
                 'invoice_number' => $invoiceNumber,
-                'customer_name' => $request->customer_name,
-                'total' => $request->total,
-                'status' => 'Selesai'
+                'customer_name'  => $request->customer_name ?? 'Umum',
+                'total'          => $request->total,
+                'type'           => $request->type,
+                'status'         => 'Selesai'
             ]);
 
             // 2. Proses Items
             foreach ($request->items as $item) {
-                $product = Product::lockForUpdate()->findOrFail($item['product_id']); // lockForUpdate mencegah race condition
+                // Jika produk, cek stok dan kurangi
+                if (!empty($item['product_id'])) {
+                    $product = Product::lockForUpdate()->findOrFail($item['product_id']);
 
-                if ($product->stok < $item['quantity']) {
-                    throw new \Exception("Stok {$product->nama} tidak cukup.");
+                    if ($product->stok < $item['quantity']) {
+                        throw new \Exception("Stok {$product->nama} tidak cukup.");
+                    }
+
+                    $product->decrement('stok', $item['quantity']);
                 }
 
-                // Kurangi stok
-                $product->decrement('stok', $item['quantity']);
-
-                // 3. Simpan Detail Transaksi (Opsional tapi disarankan)
+                // 3. Simpan Detail Transaksi
                 TransactionDetail::create([
                     'transaction_id' => $transaction->id,
-                    'product_id' => $product->id,
-                    'quantity' => $item['quantity'],
-                    'price' => $product->harga_jual,
+                    'product_id'     => $item['product_id'] ?? null,
+                    'jasa_name'      => $item['jasa_name'] ?? null, 
+                    'quantity'       => $item['quantity'],
+                    'price'          => $item['price'],
                 ]);
             }
 

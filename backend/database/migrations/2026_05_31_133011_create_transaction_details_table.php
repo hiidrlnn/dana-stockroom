@@ -13,6 +13,17 @@ return new class extends Migration
     {
         Schema::create('transaction_details', function (Blueprint $table) {
             $table->id();
+            
+            // Relasi ke tabel transactions
+            $table->foreignId('transaction_id')->constrained('transactions')->onDelete('cascade');
+            
+            // Relasi ke tabel products
+            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
+            
+            // Data transaksi detail
+            $table->integer('quantity');
+            $table->decimal('price', 15, 2); // Menggunakan decimal untuk presisi harga
+            
             $table->timestamps();
         });
     }
