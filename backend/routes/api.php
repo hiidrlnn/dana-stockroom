@@ -2,33 +2,99 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\API\ProductController;
-use App\Http\Controllers\API\TransactionController; // <--- Impor Controller baru
+use App\Http\Controllers\API\TransactionController;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| API Routes - Dana Stockroom
 |--------------------------------------------------------------------------
 */
 
-// Endpoint Autentikasi (Public)
+/*
+|--------------------------------------------------------------------------
+| PUBLIC ROUTES
+|--------------------------------------------------------------------------
+*/
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// Endpoint yang Dilindungi oleh Sanctum
+/*
+|--------------------------------------------------------------------------
+| PROTECTED ROUTES
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware('auth:sanctum')->group(function () {
-    
-    // Rute untuk mendapatkan data user yang sedang login
+
+    /*
+    |--------------------------------------------------------------------------
+    | USER
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/user', function (Request $request) {
-        return $request->user();
+        return response()->json($request->user());
     });
 
-    // CRUD Produk
+    /*
+    |--------------------------------------------------------------------------
+    | PROFILE
+    |--------------------------------------------------------------------------
+    */
+
+    // Ambil profil login
+    Route::get('/profile', [AuthController::class, 'profile']);
+
+    // Update profil
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
+
+    // Alias agar frontend lama tetap jalan
+    Route::put('/update-profile', [AuthController::class, 'updateProfile']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | PASSWORD
+    |--------------------------------------------------------------------------
+    */
+
+    // Ganti password
+    Route::post('/password/change', [AuthController::class, 'changePassword']);
+
+    // Alias agar frontend lama tetap jalan
+    Route::put('/change-password', [AuthController::class, 'changePassword']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | AUTH
+    |--------------------------------------------------------------------------
+    */
+
+    // Logout
+    Route::post('/logout', [AuthController::class, 'logout']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | PRODUCTS
+    |--------------------------------------------------------------------------
+    */
+
     Route::apiResource('products', ProductController::class);
 
-    // Rute Transaksi (Ditambahkan di sini agar terlindungi login)
+    /*
+    |--------------------------------------------------------------------------
+    | TRANSACTIONS
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/transactions', [TransactionController::class, 'index']);
+
     Route::post('/transactions', [TransactionController::class, 'store']);
-    
+
+    Route::get('/transactions/{id}', [TransactionController::class, 'show']);
+
+    Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);
 });

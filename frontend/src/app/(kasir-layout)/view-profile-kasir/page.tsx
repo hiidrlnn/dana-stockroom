@@ -1,7 +1,44 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+type UserType = {
+  nama: string;
+  email: string;
+  role: string;
+  status: string;
+};
+
 export default function ViewProfileKasirPage() {
+  const [user, setUser] = useState<UserType>({
+    nama: "Kasir",
+    email: "kasir@danastockroom.com",
+    role: "Kasir",
+    status: "Aktif",
+  });
+
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+
+    if (userData) {
+      try {
+        const parsed = JSON.parse(userData);
+
+        setUser({
+          nama: parsed.nama || "Kasir",
+          email: parsed.email || "kasir@danastockroom.com",
+          role: parsed.role || "Kasir",
+          status: parsed.status || "Aktif",
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  }, []);
+
   return (
     <div className="space-y-6">
-      {/* TITLE */}
+      {/* HEADER */}
       <div>
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
           View Profile
@@ -24,7 +61,8 @@ export default function ViewProfileKasirPage() {
 
           dark:border-white/10
           dark:bg-[#0F172A]
-        ">
+        "
+      >
         <div className="flex flex-col gap-8 md:flex-row">
           {/* AVATAR */}
           <div className="flex justify-center">
@@ -40,8 +78,9 @@ export default function ViewProfileKasirPage() {
                 text-5xl
                 font-bold
                 text-white
-              ">
-              K
+              "
+            >
+              {user.nama.charAt(0).toUpperCase()}
             </div>
           </div>
 
@@ -49,22 +88,22 @@ export default function ViewProfileKasirPage() {
           <div className="flex-1 space-y-6">
             <ProfileField
               label="Nama Lengkap"
-              value="Kasir"
+              value={user.nama}
             />
 
             <ProfileField
               label="Email"
-              value="kasir@danastockroom.com"
+              value={user.email}
             />
 
             <ProfileField
               label="Role"
-              value="Staff Kasir"
+              value={user.role}
             />
 
             <ProfileField
-              label="Nomor Telepon"
-              value="081234567890"
+              label="Status"
+              value={user.status}
             />
           </div>
         </div>
@@ -99,7 +138,8 @@ function ProfileField({
           dark:border-white/10
           dark:bg-[#081028]
           dark:text-white
-        ">
+        "
+      >
         {value}
       </div>
     </div>

@@ -1,15 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import Card from "@/components/ui/card";
 
+type UserType = {
+  nama: string;
+  email: string;
+  role: string;
+  status: string;
+};
+
 export default function PengaturanAkunKasirPage() {
-  const [profile, setProfile] = useState({
-    nama: "Kasir Utama",
-    email: "kasir@danastockroom.com",
-    telepon: "081234567890",
-    alamat: "Pontianak, Indonesia",
+  const [user, setUser] = useState<UserType>({
+    nama: "",
+    email: "",
+    role: "",
+    status: "",
+  });
+
+  const [form, setForm] = useState({
+    nama: "",
+    email: "",
   });
 
   const [password, setPassword] = useState({
@@ -18,56 +30,166 @@ export default function PengaturanAkunKasirPage() {
     confirmPassword: "",
   });
 
-  const [settings, setSettings] = useState({
-    darkMode: true,
-    notification: true,
-  });
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
 
-  const handleSaveProfile = () => {
-    alert("Profil berhasil diperbarui!");
-  };
+    if (userData) {
+      const parsed = JSON.parse(userData);
 
-  const handleChangePassword = () => {
+      setUser(parsed);
+
+      setForm({
+        nama: parsed.nama || "",
+        email: parsed.email || "",
+      });
+    }
+  }, []);
+
+const handleSaveProfile = async () => {
+  try {
+    const token =
+      localStorage.getItem("token");
+
+    const response = await fetch(
+      "http://127.0.0.1:8000/api/update-profile",
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type":
+            "application/json",
+          Accept:
+            "application/json",
+          Authorization:
+            `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          nama: form.nama,
+          email: form.email,
+        }),
+      }
+    );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message
+      );
+    }
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify(data.user)
+    );
+
+    alert(
+      "Profil berhasil diperbarui"
+    );
+  } catch (error: any) {
+    alert(error.message);
+  }
+};
+
+const handleChangePassword = async () => {
+  try {
+    // Validasi field kosong
     if (
       !password.oldPassword ||
       !password.newPassword ||
       !password.confirmPassword
     ) {
-      alert("Lengkapi semua field password!");
+      alert("Semua field password wajib diisi!");
       return;
     }
 
-    if (password.newPassword !== password.confirmPassword) {
+    // Validasi konfirmasi password
+    if (
+      password.newPassword !==
+      password.confirmPassword
+    ) {
       alert("Konfirmasi password tidak cocok!");
       return;
     }
 
-    alert("Password berhasil diperbarui!");
+    const token =
+      localStorage.getItem("token");
 
+    if (!token) {
+      alert("Session login tidak ditemukan.");
+      return;
+    }
+
+    const response = await fetch(
+      "http://127.0.0.1:8000/api/change-password",
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type":
+            "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          current_password:
+            password.oldPassword,
+
+          password:
+            password.newPassword,
+
+          password_confirmation:
+            password.confirmPassword,
+        }),
+      }
+    );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+          "Gagal mengubah password"
+      );
+    }
+
+    alert(
+      data.message ||
+        "Password berhasil diubah"
+    );
+
+    // Reset form
     setPassword({
       oldPassword: "",
       newPassword: "",
       confirmPassword: "",
     });
-  };
+  } catch (error: any) {
+    console.error(error);
+
+    alert(
+      error.message ||
+        "Terjadi kesalahan"
+    );
+  }
+};
 
   return (
-    <div className="space-y-6">
+    <div>
       {/* HEADER */}
-      <div>
+      <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
           Pengaturan Akun
         </h1>
 
         <p className="mt-2 text-gray-500 dark:text-gray-400">
-          Kelola profil akun kasir Dana Stockroom
+          Kelola informasi akun kasir Dana Stockroom
         </p>
       </div>
 
       {/* PROFILE CARD */}
-      <Card className="border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
+      <Card className="mb-6 border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
         <div className="flex flex-col items-center gap-5 md:flex-row">
-          {/* AVATAR */}
           <div
             className="
               flex
@@ -80,18 +202,22 @@ export default function PengaturanAkunKasirPage() {
               text-3xl
               font-bold
               text-white
-            ">
-            K
+            "
+          >
+            {user.nama
+              ? user.nama
+                  .charAt(0)
+                  .toUpperCase()
+              : "K"}
           </div>
 
-          {/* INFO */}
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {profile.nama}
+              {user.nama}
             </h2>
 
             <p className="text-gray-500 dark:text-gray-400">
-              {profile.email}
+              {user.email}
             </p>
 
             <div className="mt-3 flex flex-wrap gap-3">
@@ -107,8 +233,9 @@ export default function PengaturanAkunKasirPage() {
 
                   dark:bg-sky-500/20
                   dark:text-sky-400
-                ">
-                Kasir
+                "
+              >
+                {user.role}
               </span>
 
               <span
@@ -123,8 +250,9 @@ export default function PengaturanAkunKasirPage() {
 
                   dark:bg-green-500/20
                   dark:text-green-400
-                ">
-                Aktif
+                "
+              >
+                {user.status}
               </span>
             </div>
           </div>
@@ -132,111 +260,73 @@ export default function PengaturanAkunKasirPage() {
       </Card>
 
       {/* EDIT PROFILE */}
-      <Card className="border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
+      <Card className="mb-6 border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
         <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
           Edit Profil
         </h2>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          <input
-            type="text"
-            placeholder="Nama Lengkap"
-            value={profile.nama}
-            onChange={(e) =>
-              setProfile({
-                ...profile,
-                nama: e.target.value,
-              })
-            }
-            className="
-              rounded-2xl
-              border
-              border-gray-200
-              bg-gray-100
-              px-4
-              py-3
-              outline-none
+        <div className="grid gap-5 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-500">
+              Nama Lengkap
+            </label>
 
-              dark:border-white/10
-              dark:bg-[#1E293B]
-              dark:text-white
-            "
-          />
+            <input
+              type="text"
+              value={form.nama}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  nama: e.target.value,
+                })
+              }
+              className="
+                w-full
+                rounded-2xl
+                border
+                border-gray-200
+                bg-gray-100
+                px-4
+                py-3
+                outline-none
 
-          <input
-            type="email"
-            placeholder="Email"
-            value={profile.email}
-            onChange={(e) =>
-              setProfile({
-                ...profile,
-                email: e.target.value,
-              })
-            }
-            className="
-              rounded-2xl
-              border
-              border-gray-200
-              bg-gray-100
-              px-4
-              py-3
-              outline-none
+                dark:border-white/10
+                dark:bg-[#1E293B]
+                dark:text-white
+              "
+            />
+          </div>
 
-              dark:border-white/10
-              dark:bg-[#1E293B]
-              dark:text-white
-            "
-          />
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-500">
+              Email
+            </label>
 
-          <input
-            type="text"
-            placeholder="No Telepon"
-            value={profile.telepon}
-            onChange={(e) =>
-              setProfile({
-                ...profile,
-                telepon: e.target.value,
-              })
-            }
-            className="
-              rounded-2xl
-              border
-              border-gray-200
-              bg-gray-100
-              px-4
-              py-3
-              outline-none
+            <input
+              type="email"
+              value={form.email}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  email: e.target.value,
+                })
+              }
+              className="
+                w-full
+                rounded-2xl
+                border
+                border-gray-200
+                bg-gray-100
+                px-4
+                py-3
+                outline-none
 
-              dark:border-white/10
-              dark:bg-[#1E293B]
-              dark:text-white
-            "
-          />
-
-          <input
-            type="text"
-            placeholder="Alamat"
-            value={profile.alamat}
-            onChange={(e) =>
-              setProfile({
-                ...profile,
-                alamat: e.target.value,
-              })
-            }
-            className="
-              rounded-2xl
-              border
-              border-gray-200
-              bg-gray-100
-              px-4
-              py-3
-              outline-none
-
-              dark:border-white/10
-              dark:bg-[#1E293B]
-              dark:text-white
-            "
-          />
+                dark:border-white/10
+                dark:bg-[#1E293B]
+                dark:text-white
+              "
+            />
+          </div>
         </div>
 
         <button
@@ -251,18 +341,19 @@ export default function PengaturanAkunKasirPage() {
             text-white
             transition
             hover:bg-sky-600
-          ">
+          "
+        >
           Simpan Perubahan
         </button>
       </Card>
 
-      {/* CHANGE PASSWORD */}
+      {/* PASSWORD */}
       <Card className="border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
         <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
           Ganti Password
         </h2>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-3">
           <input
             type="password"
             placeholder="Password Lama"
@@ -320,7 +411,8 @@ export default function PengaturanAkunKasirPage() {
             onChange={(e) =>
               setPassword({
                 ...password,
-                confirmPassword: e.target.value,
+                confirmPassword:
+                  e.target.value,
               })
             }
             className="
@@ -351,116 +443,10 @@ export default function PengaturanAkunKasirPage() {
             text-white
             transition
             hover:bg-green-600
-          ">
+          "
+        >
           Update Password
         </button>
-      </Card>
-
-      {/* SETTINGS */}
-      <Card className="border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
-        <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
-          Preferensi
-        </h2>
-
-        <div className="space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white">
-                Dark Mode
-              </h4>
-
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Aktifkan mode gelap dashboard
-              </p>
-            </div>
-
-            <button
-              onClick={() =>
-                setSettings({
-                  ...settings,
-                  darkMode: !settings.darkMode,
-                })
-              }
-              className={`
-                h-8
-                w-16
-                rounded-full
-                transition
-
-                ${
-                  settings.darkMode
-                    ? "bg-sky-500"
-                    : "bg-gray-300"
-                }
-              `}>
-              <div
-                className={`
-                  mt-1
-                  h-6
-                  w-6
-                  rounded-full
-                  bg-white
-                  transition
-
-                  ${
-                    settings.darkMode
-                      ? "translate-x-9"
-                      : "translate-x-1"
-                  }
-                `}
-              />
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white">
-                Notifikasi
-              </h4>
-
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Aktifkan notifikasi dashboard
-              </p>
-            </div>
-
-            <button
-              onClick={() =>
-                setSettings({
-                  ...settings,
-                  notification: !settings.notification,
-                })
-              }
-              className={`
-                h-8
-                w-16
-                rounded-full
-                transition
-
-                ${
-                  settings.notification
-                    ? "bg-sky-500"
-                    : "bg-gray-300"
-                }
-              `}>
-              <div
-                className={`
-                  mt-1
-                  h-6
-                  w-6
-                  rounded-full
-                  bg-white
-                  transition
-
-                  ${
-                    settings.notification
-                      ? "translate-x-9"
-                      : "translate-x-1"
-                  }
-                `}
-              />
-            </button>
-          </div>
-        </div>
       </Card>
     </div>
   );

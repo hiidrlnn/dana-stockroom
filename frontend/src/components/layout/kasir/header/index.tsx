@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useTheme } from "next-themes";
 
 import {
   ChevronDown,
@@ -12,41 +15,65 @@ import {
   Sun,
   User,
 } from "lucide-react";
-import Link from "next/link";
-import { useTheme } from "next-themes";
 
 type Props = {
   onMenuClick: () => void;
 };
 
-export function KasirHeader({
-  onMenuClick,
-}: Props) {
+type UserData = {
+  id?: number;
+  nama: string;
+  email: string;
+  role: string;
+  status?: string;
+};
+
+export function KasirHeader({ onMenuClick }: Props) {
+  const router = useRouter();
+
   const { theme, setTheme } = useTheme();
 
-  const [mounted, setMounted] =
-    useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  const [openDropdown, setOpenDropdown] =
-    useState(false);
+  const [openDropdown, setOpenDropdown] = useState(false);
 
-  const dropdownRef =
-    useRef<HTMLDivElement>(null);
+  const [user, setUser] = useState<UserData>({
+    nama: "Kasir",
+    email: "kasir@danastockroom.com",
+    role: "Kasir",
+  });
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // close dropdown click outside
   useEffect(() => {
-    function handleClickOutside(
-      event: MouseEvent,
-    ) {
+    const userData = localStorage.getItem("user");
+
+    if (userData) {
+      try {
+        const parsed = JSON.parse(userData);
+
+        setUser({
+          id: parsed.id,
+          nama: parsed.nama || "Kasir",
+          email: parsed.email || "kasir@danastockroom.com",
+          role: parsed.role || "Kasir",
+          status: parsed.status,
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(
-          event.target as Node,
-        )
+        !dropdownRef.current.contains(event.target as Node)
       ) {
         setOpenDropdown(false);
       }
@@ -54,16 +81,42 @@ export function KasirHeader({
 
     document.addEventListener(
       "mousedown",
-      handleClickOutside,
+      handleClickOutside
     );
 
     return () => {
       document.removeEventListener(
         "mousedown",
-        handleClickOutside,
+        handleClickOutside
       );
     };
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (token) {
+        await fetch(
+          "http://127.0.0.1:8000/api/logout",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      router.push("/login");
+    }
+  };
 
   return (
     <header
@@ -80,7 +133,8 @@ export function KasirHeader({
 
         dark:border-white/10
         dark:bg-[#0F172A]
-      ">
+      "
+    >
       <div className="flex items-center justify-between gap-5">
         {/* LEFT */}
         <div className="flex items-center gap-4">
@@ -103,7 +157,8 @@ export function KasirHeader({
               dark:hover:bg-white/10
 
               xl:hidden
-            ">
+            "
+          >
             <Menu size={20} />
           </button>
         </div>
@@ -125,11 +180,10 @@ export function KasirHeader({
 
                 dark:border-white/10
                 dark:bg-[#081028]
-              ">
+              "
+            >
               <button
-                onClick={() =>
-                  setTheme("light")
-                }
+                onClick={() => setTheme("light")}
                 className={`
                   flex
                   h-10
@@ -143,14 +197,13 @@ export function KasirHeader({
                       ? "bg-sky-500 text-white"
                       : "text-gray-500 dark:text-gray-400"
                   }
-                `}>
+                `}
+              >
                 <Sun size={18} />
               </button>
 
               <button
-                onClick={() =>
-                  setTheme("dark")
-                }
+                onClick={() => setTheme("dark")}
                 className={`
                   flex
                   h-10
@@ -164,7 +217,8 @@ export function KasirHeader({
                       ? "bg-sky-500 text-white"
                       : "text-gray-500 dark:text-gray-400"
                   }
-                `}>
+                `}
+              >
                 <Moon size={18} />
               </button>
             </div>
@@ -173,12 +227,11 @@ export function KasirHeader({
           {/* PROFILE */}
           <div
             className="relative"
-            ref={dropdownRef}>
+            ref={dropdownRef}
+          >
             <button
               onClick={() =>
-                setOpenDropdown(
-                  !openDropdown,
-                )
+                setOpenDropdown(!openDropdown)
               }
               className="
                 flex
@@ -193,7 +246,8 @@ export function KasirHeader({
 
                 dark:border-white/10
                 dark:bg-[#0B1120]
-              ">
+              "
+            >
               <div
                 className="
                   flex
@@ -205,34 +259,29 @@ export function KasirHeader({
                   bg-sky-500
                   font-bold
                   text-white
-                ">
-                K
+                "
+              >
+                {user.nama.charAt(0).toUpperCase()}
               </div>
 
               <div className="hidden text-left md:block">
                 <h4 className="font-semibold text-slate-900 dark:text-white">
-                  Kasir
+                  {user.nama}
                 </h4>
 
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Staff Kasir
+                  {user.role}
                 </p>
               </div>
 
               <ChevronDown
                 size={18}
-                className={`
-                  transition
-                  ${
-                    openDropdown
-                      ? "rotate-180"
-                      : ""
-                  }
-                `}
+                className={`transition ${
+                  openDropdown ? "rotate-180" : ""
+                }`}
               />
             </button>
 
-            {/* DROPDOWN */}
             {openDropdown && (
               <div
                 className="
@@ -250,21 +299,21 @@ export function KasirHeader({
 
                   dark:border-white/10
                   dark:bg-[#0F172A]
-                ">
-                {/* TOP */}
+                "
+              >
                 <div className="border-b border-gray-200 p-5 dark:border-white/10">
                   <div className="flex items-center gap-4">
                     <div className="flex h-14 w-14 items-center justify-center rounded-full bg-sky-500 text-xl font-bold text-white">
-                      K
+                      {user.nama.charAt(0).toUpperCase()}
                     </div>
 
                     <div>
                       <h3 className="text-lg font-semibold dark:text-white">
-                        Kasir
+                        {user.nama}
                       </h3>
 
                       <p className="text-sm text-gray-500">
-                        kasir@danastockroom.com
+                        {user.email}
                       </p>
                     </div>
                   </div>
@@ -279,19 +328,18 @@ export function KasirHeader({
 
                   <DropdownItem
                     href="/pengaturan-akun-kasir"
-                    icon={
-                      <Settings size={18} />
-                    }
+                    icon={<Settings size={18} />}
                     label="Pengaturan Akun"
                   />
 
                   <DropdownItem
-                    href="/ganti-password-kasir"
+                    href="/pengaturan-akun-kasir"
                     icon={<Lock size={18} />}
                     label="Ganti Password"
                   />
 
                   <button
+                    onClick={handleLogout}
                     className="
                       mt-2
                       flex
@@ -302,8 +350,10 @@ export function KasirHeader({
                       px-4
                       py-3
                       text-red-500
+                      transition
                       hover:bg-red-50
-                    ">
+                    "
+                  >
                     <LogOut size={18} />
                     Logout
                   </button>
@@ -339,7 +389,8 @@ function DropdownItem({
         transition
         hover:bg-gray-100
         dark:hover:bg-white/5
-      ">
+      "
+    >
       {icon}
       {label}
     </Link>

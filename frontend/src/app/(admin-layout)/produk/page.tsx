@@ -441,81 +441,334 @@ export default function ProdukPage() {
         </div>
       </Card>
 
-      {/* MODAL EDIT */}
-      {editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-5">
-          <div className="w-full max-w-xl rounded-3xl bg-[#0F172A] p-6">
-            <h2 className="mb-5 text-2xl font-bold text-white">
-              Edit Produk
-            </h2>
+    {/* MODAL EDIT */}
+    {editingProduct && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+        <div className="w-full max-w-4xl rounded-3xl border border-white/10 bg-[#0F172A] p-8 shadow-2xl">
 
-            <div className="space-y-4">
+          {/* HEADER */}
+          <div className="mb-8 flex items-start justify-between">
+            <div>
+              <h2 className="text-3xl font-bold text-white">
+                Edit Produk
+              </h2>
+
+              <p className="mt-2 text-gray-400">
+                Perbarui data produk Dana Stockroom
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                setEditingProduct(null);
+                setEditImageFile(null);
+              }}
+              className="text-2xl text-gray-400 hover:text-white"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* FORM */}
+          <div className="space-y-6">
+
+            {/* NAMA */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-300">
+                Nama Produk
+              </label>
+
               <input
                 type="text"
-                value={
-                  editingProduct.nama
-                }
+                value={editingProduct.nama}
                 onChange={(e) =>
                   setEditingProduct({
                     ...editingProduct,
-                    nama:
-                      e.target.value,
+                    nama: e.target.value,
                   })
                 }
-                placeholder="Nama Produk"
-                className="w-full rounded-xl bg-[#1E293B] p-3 text-white"
+                className="
+                  w-full
+                  rounded-xl
+                  border
+                  border-white/10
+                  bg-[#1E293B]
+                  px-4
+                  py-4
+                  text-white
+                  outline-none
+                  focus:border-sky-500
+                "
               />
+            </div>
 
-              <input
-                type="text"
-                value={
-                  editingProduct.kategori
-                }
-                onChange={(e) =>
-                  setEditingProduct({
-                    ...editingProduct,
-                    kategori:
-                      e.target.value,
-                  })
-                }
-                placeholder="Kategori"
-                className="w-full rounded-xl bg-[#1E293B] p-3 text-white"
-              />
+            {/* SIZE + KATEGORI */}
+            <div className="grid gap-5 md:grid-cols-2">
 
-              <input
-                type="file"
-                onChange={(e) =>
-                  setEditImageFile(
-                    e.target
-                      .files?.[0] ??
-                      null,
-                  )
-                }
-              />
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-300">
+                  Size
+                </label>
 
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() =>
-                    setEditingProduct(
-                      null,
+                <select
+                  value={editingProduct.size}
+                  onChange={(e) =>
+                    setEditingProduct({
+                      ...editingProduct,
+                      size: e.target.value,
+                    })
+                  }
+                  className="
+                    w-full
+                    rounded-xl
+                    border
+                    border-white/10
+                    bg-[#1E293B]
+                    px-4
+                    py-4
+                    text-white
+                    outline-none
+                  "
+                >
+                  {[38,39,40,41,42,43,44,45].map((size) => (
+                    <option
+                      key={size}
+                      value={size}
+                    >
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-300">
+                  Kategori
+                </label>
+
+                <input
+                  type="text"
+                  value={editingProduct.kategori}
+                  onChange={(e) =>
+                    setEditingProduct({
+                      ...editingProduct,
+                      kategori: e.target.value,
+                    })
+                  }
+                  className="
+                    w-full
+                    rounded-xl
+                    border
+                    border-white/10
+                    bg-[#1E293B]
+                    px-4
+                    py-4
+                    text-white
+                    outline-none
+                    focus:border-sky-500
+                  "
+                />
+              </div>
+
+            </div>
+
+            {/* HARGA */}
+            <div className="grid gap-5 md:grid-cols-2">
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-300">
+                  Harga Beli (Modal HPP)
+                </label>
+
+                <input
+                  type="number"
+                  value={editingProduct.harga_beli}
+                  onChange={(e) =>
+                    setEditingProduct({
+                      ...editingProduct,
+                      harga_beli: Number(e.target.value),
+                    })
+                  }
+                  className="
+                    w-full
+                    rounded-xl
+                    border
+                    border-white/10
+                    bg-[#1E293B]
+                    px-4
+                    py-4
+                    text-white
+                    outline-none
+                    focus:border-sky-500
+                  "
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-300">
+                  Harga Jual
+                </label>
+
+                <input
+                  type="number"
+                  value={editingProduct.harga_jual}
+                  onChange={(e) =>
+                    setEditingProduct({
+                      ...editingProduct,
+                      harga_jual: Number(e.target.value),
+                    })
+                  }
+                  className="
+                    w-full
+                    rounded-xl
+                    border
+                    border-white/10
+                    bg-[#1E293B]
+                    px-4
+                    py-4
+                    text-white
+                    outline-none
+                    focus:border-sky-500
+                  "
+                />
+              </div>
+
+            </div>
+
+            {/* STOK + FOTO */}
+            <div className="grid gap-5 md:grid-cols-2">
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-300">
+                  Stok Awal
+                </label>
+
+                <input
+                  type="number"
+                  value={editingProduct.stok}
+                  onChange={(e) =>
+                    setEditingProduct({
+                      ...editingProduct,
+                      stok: Number(e.target.value),
+                    })
+                  }
+                  className="
+                    w-full
+                    rounded-xl
+                    border
+                    border-white/10
+                    bg-[#1E293B]
+                    px-4
+                    py-4
+                    text-white
+                    outline-none
+                    focus:border-sky-500
+                  "
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-300">
+                  Foto Produk
+                </label>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    setEditImageFile(
+                      e.target.files?.[0] || null
                     )
                   }
-                  className="rounded-xl bg-gray-500 px-5 py-2 text-white">
-                  Batal
-                </button>
+                  className="
+                    w-full
+                    rounded-xl
+                    border
+                    border-white/10
+                    bg-[#1E293B]
+                    px-4
+                    py-4
+                    text-white
+                  "
+                />
+              </div>
 
-                <button
-                  onClick={
-                    handleUpdateProduct
-                  }
-                  className="rounded-xl bg-sky-500 px-5 py-2 text-white">
-                  Simpan
-                </button>
+            </div>
+
+            {/* PREVIEW */}
+            <div>
+              <label className="mb-3 block text-sm font-medium text-gray-300">
+                Foto Saat Ini
+              </label>
+
+              <div className="flex items-center gap-4">
+
+                {editImageFile ? (
+                  <Image
+                    src={URL.createObjectURL(editImageFile)}
+                    alt="preview"
+                    width={120}
+                    height={120}
+                    className="h-28 w-28 rounded-xl object-cover"
+                  />
+                ) : editingProduct.image ? (
+                  <Image
+                    src={`${IMAGE_URL}${editingProduct.image}`}
+                    alt={editingProduct.nama}
+                    width={120}
+                    height={120}
+                    className="h-28 w-28 rounded-xl object-cover"
+                  />
+                ) : (
+                  <div className="flex h-28 w-28 items-center justify-center rounded-xl bg-gray-700 text-sm text-gray-400">
+                    No Image
+                  </div>
+                )}
+
               </div>
             </div>
+
+            {/* ACTION */}
+            <div className="flex justify-end gap-4 pt-4">
+
+              <button
+                onClick={() => {
+                  setEditingProduct(null);
+                  setEditImageFile(null);
+                }}
+                className="
+                  rounded-xl
+                  border
+                  border-white/10
+                  px-7
+                  py-3
+                  text-white
+                "
+              >
+                Batal
+              </button>
+
+              <button
+                onClick={handleUpdateProduct}
+                className="
+                  rounded-xl
+                  bg-sky-500
+                  px-7
+                  py-3
+                  font-semibold
+                  text-white
+                  hover:bg-sky-600
+                "
+              >
+                Update Produk
+              </button>
+
+            </div>
+
           </div>
         </div>
-      )}
+      </div>
+    )}
     </div>
   );
 }

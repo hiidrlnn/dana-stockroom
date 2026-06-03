@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -11,14 +12,37 @@ import {
   UserIcon,
 } from "./icons";
 
+interface UserData {
+  nama?: string;
+  email?: string;
+  role?: string;
+}
+
 export function UserInfo() {
+  const router = useRouter();
+
   const [open, setOpen] = useState(false);
+
+  const [user, setUser] = useState<UserData>({
+    nama: "Admin Utama",
+    email: "admin@danastockroom.com",
+    role: "Owner",
+  });
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  /* =========================
-     CLOSE OUTSIDE CLICK
-  ========================= */
+  useEffect(() => {
+    const savedUser = localStorage.getItem("user");
+
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -36,11 +60,39 @@ export function UserInfo() {
     };
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("access_token");
+
+      if (token) {
+        await fetch("http://127.0.0.1:8000/api/logout", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+
+    router.push("/login");
+  };
+
+  const firstLetter = user.nama?.charAt(0).toUpperCase() || "A";
+
   return (
-    <div ref={dropdownRef} className="relative z-[9999] overflow-visible">
+    <div ref={dropdownRef} className="relative z-[9999]">
       {/* BUTTON */}
       <button
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => setOpen(!open)}
         className="
           flex
           items-center
@@ -54,11 +106,10 @@ export function UserInfo() {
           shadow-sm
           transition
           hover:border-sky-500
-
           dark:border-white/10
           dark:bg-[#0F172A]
-        ">
-        {/* AVATAR */}
+        "
+      >
         <div
           className="
             relative
@@ -71,8 +122,10 @@ export function UserInfo() {
             bg-sky-500
             font-bold
             text-white
-          ">
-          D{/* ONLINE */}
+          "
+        >
+          {firstLetter}
+
           <span
             className="
               absolute
@@ -84,33 +137,25 @@ export function UserInfo() {
               border-2
               border-white
               bg-green-500
-
               dark:border-[#0F172A]
             "
           />
         </div>
 
-        {/* INFO */}
         <div className="hidden text-left md:block">
           <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-            Admin Utama
+            {user.nama}
           </h4>
 
-          <p className="text-xs text-gray-500 dark:text-gray-400">Owner</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {user.role}
+          </p>
         </div>
 
-        {/* ICON */}
         <ChevronDownIcon
-          className={`
-            size-4
-            text-gray-500
-            transition-transform
-            duration-200
-
-            dark:text-gray-400
-
-            ${open ? "rotate-180" : ""}
-          `}
+          className={`size-4 text-gray-500 transition-transform duration-200 ${
+            open ? "rotate-180" : ""
+          }`}
         />
       </button>
 
@@ -129,14 +174,13 @@ export function UserInfo() {
             border-gray-200
             bg-white
             shadow-2xl
-
             dark:border-white/10
             dark:bg-[#0F172A]
-          ">
-          {/* TOP */}
+          "
+        >
+          {/* HEADER */}
           <div className="border-b border-gray-200 p-5 dark:border-white/10">
             <div className="flex items-center gap-4">
-              {/* AVATAR */}
               <div
                 className="
                   flex
@@ -149,21 +193,20 @@ export function UserInfo() {
                   text-2xl
                   font-bold
                   text-white
-                ">
-                D
+                "
+              >
+                {firstLetter}
               </div>
 
-              {/* INFO */}
               <div className="min-w-0 flex-1">
                 <h3 className="truncate text-xl font-bold text-gray-900 dark:text-white">
-                  Admin Utama
+                  {user.nama}
                 </h3>
 
                 <p className="truncate text-sm text-gray-500 dark:text-gray-400">
-                  admin@danastockroom.com
+                  {user.email}
                 </p>
 
-                {/* ROLE */}
                 <span
                   className="
                     mt-3
@@ -175,11 +218,11 @@ export function UserInfo() {
                     text-xs
                     font-semibold
                     text-purple-600
-
                     dark:bg-purple-500/20
                     dark:text-purple-400
-                  ">
-                  Owner
+                  "
+                >
+                  {user.role}
                 </span>
               </div>
             </div>
@@ -187,75 +230,34 @@ export function UserInfo() {
 
           {/* MENU */}
           <div className="p-3">
-            {/* PROFILE */}
             <Link
-              href="/pengaturan/pengaturan-akun"
+              href="/pengaturan/profil"
+              onClick={() => setOpen(false)}
               className="
-                flex
-                items-center
-                gap-3
-                rounded-2xl
-                px-4
-                py-3
-                text-gray-700
-                transition
-                hover:bg-gray-100
-
-                dark:text-gray-300
-                dark:hover:bg-white/5
-              ">
+                flex items-center gap-3 rounded-2xl px-4 py-3
+                text-gray-700 transition hover:bg-gray-100
+                dark:text-gray-300 dark:hover:bg-white/5
+              "
+            >
               <UserIcon className="size-5" />
-
               <span className="font-medium">View Profile</span>
             </Link>
 
-            {/* SETTINGS */}
             <Link
               href="/pengaturan/pengaturan-akun"
+              onClick={() => setOpen(false)}
               className="
-                flex
-                items-center
-                gap-3
-                rounded-2xl
-                px-4
-                py-3
-                text-gray-700
-                transition
-                hover:bg-gray-100
-
-                dark:text-gray-300
-                dark:hover:bg-white/5
-              ">
+                flex items-center gap-3 rounded-2xl px-4 py-3
+                text-gray-700 transition hover:bg-gray-100
+                dark:text-gray-300 dark:hover:bg-white/5
+              "
+            >
               <SettingsIcon className="size-5" />
-
               <span className="font-medium">Pengaturan Akun</span>
             </Link>
 
-            {/* PASSWORD */}
             <button
-              className="
-                flex
-                w-full
-                items-center
-                gap-3
-                rounded-2xl
-                px-4
-                py-3
-                text-left
-                text-gray-700
-                transition
-                hover:bg-gray-100
-
-                dark:text-gray-300
-                dark:hover:bg-white/5
-              ">
-              <LockIcon className="size-5" />
-
-              <span className="font-medium">Ganti Password</span>
-            </button>
-
-            {/* LOGOUT */}
-            <button
+              onClick={handleLogout}
               className="
                 mt-2
                 flex
@@ -269,11 +271,10 @@ export function UserInfo() {
                 text-red-500
                 transition
                 hover:bg-red-50
-
                 dark:hover:bg-red-500/10
-              ">
+              "
+            >
               <LogoutIcon className="size-5" />
-
               <span className="font-medium">Logout</span>
             </button>
           </div>
