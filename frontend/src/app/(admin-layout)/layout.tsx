@@ -1,9 +1,35 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { SidebarProvider } from "@/components/layout/sidebar/sidebar-context";
+
 import type { PropsWithChildren } from "react";
 
-export default function WithLayout({ children }: PropsWithChildren) {
+export default function WithLayout({
+  children,
+}: PropsWithChildren) {
+  const router = useRouter();
+
+  useEffect(() => {
+    const token =
+      localStorage.getItem("token");
+
+    if (
+      !token ||
+      token === "null" ||
+      token === "undefined"
+    ) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      router.replace("/login");
+    }
+  }, [router]);
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-white transition-colors dark:bg-[#020d1a]">

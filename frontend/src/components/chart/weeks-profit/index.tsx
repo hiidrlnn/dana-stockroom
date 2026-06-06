@@ -2,32 +2,62 @@ import { PeriodPicker } from "@/components/period-picker";
 import { cn } from "@/lib/utils";
 import { WeeksProfitChart } from "./chart";
 
+const API_URL =
+  "http://127.0.0.1:8000/api/dashboard";
+
 type PropsType = {
   timeFrame?: string;
   className?: string;
 };
 
-export async function WeeksProfit({ className, timeFrame }: PropsType) {
-  const chartData = {
-    sales: [
-      { x: "Sen", y: 120 },
-      { x: "Sel", y: 150 },
-      { x: "Rab", y: 180 },
-      { x: "Kam", y: 140 },
-      { x: "Jum", y: 210 },
-      { x: "Sab", y: 250 },
-      { x: "Min", y: 190 },
-    ],
+export async function WeeksProfit({
+  className,
+  timeFrame,
+}: PropsType) {
+  const response = await fetch(
+    API_URL,
+    {
+      cache: "no-store",
+    },
+  );
 
-    revenue: [
-      { x: "Sen", y: 80 },
-      { x: "Sel", y: 110 },
-      { x: "Rab", y: 130 },
-      { x: "Kam", y: 100 },
-      { x: "Jum", y: 160 },
-      { x: "Sab", y: 190 },
-      { x: "Min", y: 140 },
-    ],
+  const dashboard =
+    await response.json();
+
+  const labels =
+    dashboard.weekly_labels ??
+    [];
+
+  const sales =
+    dashboard.weekly_sales ??
+    [];
+
+  const chartData = {
+    sales: labels.map(
+      (
+        label: string,
+        index: number,
+      ) => ({
+        x: label,
+        y:
+          Number(
+            sales[index],
+          ) || 0,
+      }),
+    ),
+
+    revenue: labels.map(
+      (
+        label: string,
+        index: number,
+      ) => ({
+        x: label,
+        y:
+          Number(
+            sales[index],
+          ) || 0,
+      }),
+    ),
   };
 
   return (
@@ -38,17 +68,27 @@ export async function WeeksProfit({ className, timeFrame }: PropsType) {
       )}>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-2xl font-bold text-dark dark:text-white">
-          Keuntungan {timeFrame || "Minggu Ini"}
+          Keuntungan{" "}
+          {timeFrame ||
+            "Minggu Ini"}
         </h2>
 
         <PeriodPicker
-          items={["Minggu Ini", "Minggu Terakhir"]}
-          defaultValue={timeFrame || "Minggu Ini"}
+          items={[
+            "Minggu Ini",
+            "Minggu Terakhir",
+          ]}
+          defaultValue={
+            timeFrame ||
+            "Minggu Ini"
+          }
           sectionKey="weeks_profit"
         />
       </div>
 
-      <WeeksProfitChart data={chartData} />
+      <WeeksProfitChart
+        data={chartData}
+      />
     </div>
   );
 }

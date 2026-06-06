@@ -1,15 +1,99 @@
 import { OverviewCard } from "./card";
 import * as icons from "./icons";
 
+const API_URL =
+  "http://127.0.0.1:8000/api/dashboard";
+
+function formatRupiah(
+  value: number,
+) {
+  return new Intl.NumberFormat(
+    "id-ID",
+    {
+      style: "currency",
+      currency: "IDR",
+      maximumFractionDigits: 0,
+    },
+  ).format(value);
+}
+
+type DashboardResponse = {
+  success?: boolean;
+  penjualan: number;
+  stok_produk: number;
+  transaksi: number;
+  restock: number;
+};
+
+async function getDashboardData(): Promise<DashboardResponse> {
+  try {
+    const response = await fetch(
+      API_URL,
+      {
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      console.error(
+        "Dashboard API Error:",
+        response.status,
+      );
+
+      return {
+        penjualan: 0,
+        stok_produk: 0,
+        transaksi: 0,
+        restock: 0,
+      };
+    }
+
+    const data =
+      await response.json();
+
+    return {
+      penjualan: Number(
+        data?.penjualan ?? 0,
+      ),
+      stok_produk: Number(
+        data?.stok_produk ?? 0,
+      ),
+      transaksi: Number(
+        data?.transaksi ?? 0,
+      ),
+      restock: Number(
+        data?.restock ?? 0,
+      ),
+    };
+  } catch (error) {
+    console.error(
+      "Dashboard Fetch Error:",
+      error,
+    );
+
+    return {
+      penjualan: 0,
+      stok_produk: 0,
+      transaksi: 0,
+      restock: 0,
+    };
+  }
+}
+
 export async function OverviewCardsGroup() {
+  const dashboard =
+    await getDashboardData();
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <OverviewCard
         label="Penjualan"
         data={{
-          value: "Rp 12.450.000",
-          growthRate: "+12%",
-          period: "HARI INI",
+          value: formatRupiah(
+            dashboard.penjualan,
+          ),
+          period:
+            "TOTAL PENJUALAN",
         }}
         Icon={icons.Profit}
       />
@@ -17,8 +101,9 @@ export async function OverviewCardsGroup() {
       <OverviewCard
         label="Stok Produk"
         data={{
-          value: "1.280",
-          growthRate: "",
+          value: String(
+            dashboard.stok_produk,
+          ),
           period: "ITEM READY",
         }}
         Icon={icons.Product}
@@ -27,9 +112,11 @@ export async function OverviewCardsGroup() {
       <OverviewCard
         label="Transaksi"
         data={{
-          value: "842",
-          growthRate: "",
-          period: "BULAN INI",
+          value: String(
+            dashboard.transaksi,
+          ),
+          period:
+            "TOTAL TRANSAKSI",
         }}
         Icon={icons.Views}
       />
@@ -37,9 +124,11 @@ export async function OverviewCardsGroup() {
       <OverviewCard
         label="Restock"
         data={{
-          value: "24",
-          growthRate: "",
-          period: "SEGERA CEK",
+          value: String(
+            dashboard.restock,
+          ),
+          period:
+            "SEGERA CEK",
         }}
         Icon={icons.Users}
       />

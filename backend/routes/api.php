@@ -6,12 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\TransactionController;
-
-/*
-|--------------------------------------------------------------------------
-| API Routes - Dana Stockroom
-|--------------------------------------------------------------------------
-*/
+use App\Http\Controllers\API\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,6 +16,18 @@ use App\Http\Controllers\API\TransactionController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+/*
+|--------------------------------------------------------------------------
+| DASHBOARD
+|--------------------------------------------------------------------------
+|
+| Dibuat public agar dashboard Next.js bisa membaca statistik
+| tanpa error Sanctum.
+|
+*/
+
+Route::get('/dashboard', [DashboardController::class, 'index']);
 
 /*
 |--------------------------------------------------------------------------
@@ -46,13 +53,10 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    // Ambil profil login
     Route::get('/profile', [AuthController::class, 'profile']);
 
-    // Update profil
     Route::put('/profile', [AuthController::class, 'updateProfile']);
 
-    // Alias agar frontend lama tetap jalan
     Route::put('/update-profile', [AuthController::class, 'updateProfile']);
 
     /*
@@ -61,10 +65,8 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    // Ganti password
     Route::post('/password/change', [AuthController::class, 'changePassword']);
 
-    // Alias agar frontend lama tetap jalan
     Route::put('/change-password', [AuthController::class, 'changePassword']);
 
     /*
@@ -73,7 +75,6 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    // Logout
     Route::post('/logout', [AuthController::class, 'logout']);
 
     /*

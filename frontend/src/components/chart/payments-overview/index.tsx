@@ -1,7 +1,9 @@
 import { PeriodPicker } from "@/components/period-picker";
 import { cn } from "@/lib/utils";
-
 import { PaymentsOverviewChart } from "./chart";
+
+const API_URL =
+  "http://127.0.0.1:8000/api/dashboard";
 
 type PropsType = {
   timeFrame?: string;
@@ -12,112 +14,131 @@ export async function PaymentsOverview({
   timeFrame = "Bulanan",
   className,
 }: PropsType) {
-  /* =========================
-     FORMAT RUPIAH
-  ========================= */
-  const formatRupiah = (value: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
+  const response = await fetch(
+    API_URL,
+    {
+      cache: "no-store",
+    },
+  );
 
-  /* =========================
-     DUMMY DATA
-  ========================= */
+  const dashboard =
+    await response.json();
+
+  const labels =
+    dashboard.monthly_labels ?? [];
+
+  const sales =
+    dashboard.monthly_sales ?? [];
+
   const data = {
-    received: [
-      { x: "Jan", y: 1200000 },
-      { x: "Feb", y: 1900000 },
-      { x: "Mar", y: 1500000 },
-      { x: "Apr", y: 2200000 },
-      { x: "Mei", y: 2800000 },
-    ],
+    received: labels.map(
+      (
+        label: string,
+        index: number,
+      ) => ({
+        x: label,
+        y:
+          Number(
+            sales[index],
+          ) || 0,
+      }),
+    ),
 
-    due: [
-      { x: "Jan", y: 400000 },
-      { x: "Feb", y: 700000 },
-      { x: "Mar", y: 500000 },
-      { x: "Apr", y: 800000 },
-      { x: "Mei", y: 650000 },
-    ],
+    due: labels.map(
+      (
+        label: string,
+        index: number,
+      ) => ({
+        x: label,
+        y: 0,
+      }),
+    ),
   };
 
-  /* =========================
-     TOTAL
-  ========================= */
-  const totalReceived = data.received.reduce((acc, { y }) => acc + y, 0);
+  const totalReceived =
+    data.received.reduce(
+      (acc: number, item: any) =>
+        acc + item.y,
+      0,
+    );
 
-  const totalDue = data.due.reduce((acc, { y }) => acc + y, 0);
+  const formatRupiah = (
+    value: number,
+  ) => {
+    return new Intl.NumberFormat(
+      "id-ID",
+      {
+        style: "currency",
+        currency: "IDR",
+        maximumFractionDigits: 0,
+      },
+    ).format(value);
+  };
 
   return (
     <div
       className={cn(
         `
-          grid
-          gap-2
-          rounded-[10px]
-          border
-          border-gray-200
-          bg-white
-          px-7.5
-          pb-6
-          pt-7.5
-          shadow-1
-
-          dark:border-white/10
-          dark:bg-gray-dark
-          dark:shadow-card
-        `,
+        grid
+        gap-2
+        rounded-[10px]
+        border
+        border-gray-200
+        bg-white
+        px-7.5
+        pb-6
+        pt-7.5
+        shadow-1
+        dark:border-white/10
+        dark:bg-gray-dark
+        dark:shadow-card
+      `,
         className,
       )}>
-      {/* HEADER */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-body-2xlg font-bold text-gray-900 dark:text-white">
           Ringkasan Pembayaran
         </h2>
 
-        <PeriodPicker defaultValue={timeFrame} sectionKey="payments_overview" />
+        <PeriodPicker
+          defaultValue={
+            timeFrame
+          }
+          sectionKey="payments_overview"
+        />
       </div>
 
-      {/* CHART */}
-      <PaymentsOverviewChart data={data} />
+      <PaymentsOverviewChart
+        data={data}
+      />
 
-      {/* SUMMARY */}
       <dl
         className="
-          grid
-          divide-gray-200
-          text-center
-
-          dark:divide-dark-3
-
-          sm:grid-cols-2
-          sm:divide-x
-
-          [&>div]:flex
-          [&>div]:flex-col-reverse
-          [&>div]:gap-1
-        ">
-        {/* DITERIMA */}
-        <div className="max-sm:mb-3 max-sm:border-b max-sm:border-gray-200 max-sm:pb-3 dark:max-sm:border-white/10">
+        grid
+        divide-gray-200
+        text-center
+        dark:divide-dark-3
+        sm:grid-cols-2
+        sm:divide-x
+      ">
+        <div>
           <dt className="text-xl font-bold text-gray-900 dark:text-white">
-            {formatRupiah(totalReceived)}
+            {formatRupiah(
+              totalReceived,
+            )}
           </dt>
 
-          <dd className="font-medium text-gray-500 dark:text-dark-6">
+          <dd className="font-medium text-gray-500">
             Diterima
           </dd>
         </div>
 
-        {/* BELUM DIBAYAR */}
         <div>
           <dt className="text-xl font-bold text-gray-900 dark:text-white">
-            {formatRupiah(totalDue)}
+            Rp 0
           </dt>
 
-          <dd className="font-medium text-gray-500 dark:text-dark-6">
+          <dd className="font-medium text-gray-500">
             Belum Dibayar
           </dd>
         </div>
