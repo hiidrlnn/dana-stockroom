@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Card from "@/components/ui/card";
 import { formatRupiah } from "@/lib/format-rupiah";
 import { 
@@ -29,6 +29,12 @@ type ProductStockType = {
   statusStok: "Aman" | "Menipis" | "Habis";
 };
 
+interface DashboardSummary {
+  total_nota: number;
+  transaksi_selesai: number;
+  transaksi_pending: number;
+  transaksi_dibatalkan: number;
+}
 export default function MonitoringOwnerPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Semua");
@@ -36,14 +42,15 @@ export default function MonitoringOwnerPage() {
   // State baru untuk pencarian & filter stok barang
   const [searchStock, setSearchStock] = useState("");
   const [kategoriFilter, setKategoriFilter] = useState("Semua");
+  const [summary, setSummary] = useState<DashboardSummary>({
+  total_nota: 0,
+  transaksi_selesai: 0,
+  transaksi_pending: 0,
+  transaksi_dibatalkan: 0,
+});
 
   // 1. Data Transaksi Berdasarkan Riwayat Kasir
-  const [transactions] = useState<TransactionType[]>([
-    { id: 1, invoice: "INV-001", customer: "Dirlan", produk: "Nike Air Force 1", metode: "QRIS", total: 3700000, status: "Selesai", tanggal: "20 Mei 2026" },
-    { id: 2, invoice: "INV-002", customer: "Andi", produk: "Adidas Samba", metode: "Cash", total: 1650000, status: "Pending", tanggal: "20 Mei 2026" },
-    { id: 3, invoice: "INV-003", customer: "Budi", produk: "New Balance 530", metode: "Transfer", total: 2100000, status: "Dibatalkan", tanggal: "19 Mei 2026" },
-    { id: 4, invoice: "INV-004", customer: "Rizky", produk: "Converse High", metode: "QRIS", total: 950000, status: "Selesai", tanggal: "19 Mei 2026" },
-  ]);
+  const [transactions, setTransactions] = useState<any[]>([]);
 
   // 2. Data Master Stok Barang / Produk Toko Dana Stockroom
   const [stocks] = useState<ProductStockType[]>([
@@ -58,16 +65,74 @@ export default function MonitoringOwnerPage() {
   /* =========================
       LOGIKA FILTER TRANSAKSI
   ========================= */
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter((item) => {
-      const searchMatch =
-        item.invoice.toLowerCase().includes(search.toLowerCase()) ||
-        item.customer.toLowerCase().includes(search.toLowerCase()) ||
-        item.produk.toLowerCase().includes(search.toLowerCase());
-      const statusMatch = statusFilter === "Semua" || item.status === statusFilter;
-      return searchMatch && statusMatch;
+  const fetchDashboardSummary = async () => {
+  try {
+    const response = await fetch(
+      "http://127.0.0.1:8000/api/dashboard"
+    );
+
+    const data = await response.json();
+
+    setSummary({
+      total_nota: data.total_nota ?? 0,
+      transaksi_selesai: data.transaksi_selesai ?? 0,
+      transaksi_pending: data.transaksi_pending ?? 0,
+      transaksi_dibatalkan: data.transaksi_dibatalkan ?? 0,
     });
-  }, [transactions, search, statusFilter]);
+  } catch (error) {
+    console.error(
+      "Gagal mengambil ringkasan dashboard:",
+      error
+    );
+  }
+};
+const fetchTransactions = async () => {
+  try {
+    const response = await fetch(
+      "http://127.0.0.1:8000/api/transactions"
+    );
+
+    const data = await response.json();
+
+    setTransactions(data);
+  } catch (error) {
+    console.error(
+      "Gagal mengambil transaksi:",
+      error
+    );
+  }
+};
+
+useEffect(() => {
+  fetchDashboardSummary();
+  fetchTransactions();
+
+  const interval = setInterval(() => {
+    fetchDashboardSummary();
+    fetchTransactions();
+  }, 5000);
+
+  return () => clearInterval(interval);
+}, []);
+
+const filteredTransactions = useMemo(() => {
+  return transactions.filter((item) => {
+    const searchMatch =
+      item.invoice_number
+        ?.toLowerCase()
+        .includes(search.toLowerCase()) ||
+
+      item.customer_name
+        ?.toLowerCase()
+        .includes(search.toLowerCase());
+
+    const statusMatch =
+      statusFilter === "Semua" ||
+      item.status === statusFilter;
+
+    return searchMatch && statusMatch;
+  });
+}, [transactions, search, statusFilter]);
 
   /* =========================
       LOGIKA FILTER STOK BARANG
@@ -80,13 +145,7 @@ export default function MonitoringOwnerPage() {
       const kategoriMatch = kategoriFilter === "Semua" || item.kategori === kategoriFilter;
       return searchMatch && kategoriMatch;
     });
-  }, [stocks, searchStock, kategoriFilter]);
-
-  // Perhitungan Data Laporan / Statistik ringkas
-  const selesaiCount = transactions.filter((item) => item.status === "Selesai").length;
-  const pendingCount = transactions.filter((item) => item.status === "Pending").length;
-  const cancelCount = transactions.filter((item) => item.status === "Dibatalkan").length;
-
+  }, [stocks, searchStock, kategoriFilter]);  
   return (
     <div className="space-y-8 p-6">
       
@@ -218,19 +277,19 @@ export default function MonitoringOwnerPage() {
         <div className="grid grid-cols-1 gap-5 md:grid-cols-4">
           <Card className="border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
             <p className="text-sm text-gray-500 dark:text-gray-400">Total Nota Masuk</p>
-            <h3 className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{transactions.length}</h3>
+            <h3 className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{summary.total_nota}</h3>
           </Card>
           <Card className="border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
             <p className="text-sm text-gray-500 dark:text-gray-400">Transaksi Selesai</p>
-            <h3 className="mt-2 text-2xl font-bold text-green-500">{selesaiCount}</h3>
+            <h3 className="mt-2 text-2xl font-bold text-green-500">{summary.transaksi_selesai}</h3>
           </Card>
           <Card className="border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
             <p className="text-sm text-gray-500 dark:text-gray-400">Transaksi Pending</p>
-            <h3 className="mt-2 text-2xl font-bold text-yellow-500">{pendingCount}</h3>
+            <h3 className="mt-2 text-2xl font-bold text-yellow-500">{summary.transaksi_pending}</h3>
           </Card>
           <Card className="border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
             <p className="text-sm text-gray-500 dark:text-gray-400">Transaksi Dibatalkan</p>
-            <h3 className="mt-2 text-2xl font-bold text-red-500">{cancelCount}</h3>
+            <h3 className="mt-2 text-2xl font-bold text-red-500">{summary.transaksi_dibatalkan}</h3>
           </Card>
         </div>
       </div>
@@ -365,37 +424,62 @@ export default function MonitoringOwnerPage() {
                 </thead>
 
                 <tbody>
-                  {filteredTransactions.map((item) => (
-                    <tr key={item.id} className="border-b border-gray-200 dark:border-white/5 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors">
-                      <td className="py-5 font-semibold text-gray-900 dark:text-white pl-4">{item.invoice}</td>
-                      <td className="py-5 text-gray-700 dark:text-gray-300">{item.customer}</td>
-                      <td className="py-5 text-gray-700 dark:text-gray-300">{item.produk}</td>
-                      <td className="py-5 text-gray-700 dark:text-gray-300">{item.metode}</td>
-                      <td className="py-5 font-semibold text-gray-900 dark:text-white">{formatRupiah(item.total)}</td>
-                      <td className="py-5">
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          item.status === "Selesai"
-                            ? "bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400"
-                            : item.status === "Pending"
-                              ? "bg-yellow-100 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400"
-                              : "bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
-                        }`}>
-                          {item.status}
-                        </span>
-                      </td>
-                      <td className="py-5 text-gray-700 dark:text-gray-300">{item.tanggal}</td>
-                      <td className="py-5 text-center">
-                        <div className="flex items-center justify-center gap-3">
-                          <button className="rounded-xl bg-sky-100 px-4 py-2 text-sm font-medium text-sky-600 hover:bg-sky-200 dark:bg-sky-500/20 dark:text-sky-400 transition-all">
-                            Detail
-                          </button>
-                          <button className="rounded-xl bg-green-100 px-4 py-2 text-sm font-medium text-green-600 hover:bg-green-200 dark:bg-green-500/20 dark:text-green-400 transition-all">
-                            Cetak Ulang
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+  {filteredTransactions.map((item) => (
+    <tr
+      key={item.id}
+      className="border-b border-gray-200 transition-colors hover:bg-gray-50/50 dark:border-white/5 dark:hover:bg-white/5"
+    >
+      <td className="py-5 pl-4 font-semibold text-gray-900 dark:text-white">
+        {item.invoice_number}
+      </td>
+
+      <td className="py-5 text-gray-700 dark:text-gray-300">
+        {item.customer_name}
+      </td>
+
+      <td className="py-5 text-gray-700 dark:text-gray-300">
+        {item.type ?? "-"}
+      </td>
+
+      <td className="py-5 text-gray-700 dark:text-gray-300">
+        -
+      </td>
+
+      <td className="py-5 font-semibold text-gray-900 dark:text-white">
+        {formatRupiah(item.total)}
+      </td>
+
+      <td className="py-5">
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+            item.status === "Selesai"
+              ? "bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400"
+              : item.status === "Pending"
+              ? "bg-yellow-100 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400"
+              : "bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
+          }`}
+        >
+          {item.status}
+        </span>
+      </td>
+
+      <td className="py-5 text-gray-700 dark:text-gray-300">
+        {new Date(item.created_at).toLocaleString("id-ID")}
+      </td>
+
+      <td className="py-5 text-center">
+        <div className="flex items-center justify-center gap-3">
+          <button className="rounded-xl bg-sky-100 px-4 py-2 text-sm font-medium text-sky-600 transition-all hover:bg-sky-200 dark:bg-sky-500/20 dark:text-sky-400">
+            Detail
+          </button>
+
+          <button className="rounded-xl bg-green-100 px-4 py-2 text-sm font-medium text-green-600 transition-all hover:bg-green-200 dark:bg-green-500/20 dark:text-green-400">
+            Cetak Ulang
+          </button>
+        </div>
+      </td>
+    </tr>
+  ))}
                 </tbody>
               </table>
             </div>

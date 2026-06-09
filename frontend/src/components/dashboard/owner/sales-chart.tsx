@@ -1,41 +1,104 @@
 "use client";
 
-import React from "react";
+import { useEffect, useState } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
-const chartData = [
-  { day: "Sen", height: "h-24" },
-  { day: "Sel", height: "h-40" },
-  { day: "Rab", height: "h-28" },
-  { day: "Kam", height: "h-48" },
-  { day: "Jum", height: "h-36" },
-  { day: "Sab", height: "h-52" },
-  { day: "Min", height: "h-44" },
-];
+interface ChartData {
+  day: string;
+  sales: number;
+}
 
 export default function SalesChart() {
+  const [chartData, setChartData] = useState<ChartData[]>([]);
+
+  const fetchChartData = async () => {
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/dashboard"
+      );
+
+      const result = await response.json();
+
+      const labels = result.weekly_labels ?? [];
+      const sales = result.weekly_sales ?? [];
+
+      const formattedData = labels.map(
+        (label: string, index: number) => ({
+          day: label,
+          sales: sales[index] ?? 0,
+        })
+      );
+
+      setChartData(formattedData);
+    } catch (error) {
+      console.error(
+        "Gagal mengambil data grafik:",
+        error
+      );
+    }
+  };
+
+  useEffect(() => {
+    fetchChartData();
+
+    const interval = setInterval(() => {
+      fetchChartData();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-white/5 dark:bg-[#0F172A] h-full">
-      <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-6">
+    <div className="h-full rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-white/5 dark:bg-[#0F172A]">
+      <h3 className="mb-6 text-sm font-bold text-slate-900 dark:text-white">
         Penjualan Mingguan
       </h3>
-      
-      {/* CONTAINER GRAFIK */}
-      <div className="flex items-end justify-between gap-2 h-60 px-2 border-b border-gray-100 dark:border-white/5 pb-4">
-        {chartData.map((item, index) => (
-          <div key={index} className="flex flex-col items-center flex-1 group">
-            {/* Batang Grafik */}
-            <div className={`w-full ${item.height} rounded-t-xl bg-sky-500 transition-all duration-300 group-hover:bg-sky-600 shadow-md shadow-sky-500/10`} />
-          </div>
-        ))}
-      </div>
 
-      {/* LABEL HARI */}
-      <div className="flex justify-between gap-2 mt-3 px-2">
-        {chartData.map((item, index) => (
-          <span key={index} className="flex-1 text-center text-xs font-semibold text-gray-400 dark:text-gray-500">
-            {item.day}
-          </span>
-        ))}
+      <div className="h-64">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData}>
+            <XAxis
+              dataKey="day"
+              tick={{ fill: "#64748B" }}
+              axisLine={false}
+              tickLine={false}
+            />
+
+            <YAxis
+              tick={{ fill: "#64748B" }}
+              axisLine={false}
+              tickLine={false}
+            />
+
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#1E293B",
+                border: "none",
+                borderRadius: "8px",
+                color: "#FFFFFF",
+              }}
+              formatter={(value: number) => [
+                `Rp ${value.toLocaleString("id-ID")}`,
+                "Penjualan",
+              ]}
+            />
+
+            <Bar
+              dataKey="sales"
+              fill="#3C50E0"
+              stroke="#3C50E0"
+              radius={[8, 8, 0, 0]}
+              isAnimationActive={false}
+            />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

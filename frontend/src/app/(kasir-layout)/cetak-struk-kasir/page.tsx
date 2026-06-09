@@ -1,9 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import jsPDF from "jspdf";
+
 
 import Card from "@/components/ui/card";
 import { formatRupiah } from "@/lib/format-rupiah";
+
+const API_URL =
+  "http://127.0.0.1:8000/api/transactions";
 
 type TransactionType = {
   invoice: string;
@@ -20,61 +25,275 @@ type TransactionType = {
 export default function CetakStrukKasirPage() {
   const [search, setSearch] = useState("");
 
-  const transactions: TransactionType[] = [
-    {
-      invoice: "INV-001",
-      customer: "Dirlan",
-      kasir: "Kasir 1",
-      produk: "Nike Air Force 1",
-      qty: 1,
-      metode: "QRIS",
-      total: 3700000,
-      status: "Selesai",
-      tanggal: "20 Mei 2026",
-    },
+const [transactions, setTransactions] = useState<any[]>([]);
+const [loading, setLoading] = useState(true);
 
-    {
-      invoice: "INV-002",
-      customer: "Andi",
-      kasir: "Kasir 1",
-      produk: "Adidas Samba",
-      qty: 1,
-      metode: "Cash",
-      total: 1650000,
-      status: "Pending",
-      tanggal: "20 Mei 2026",
-    },
-
-    {
-      invoice: "INV-003",
-      customer: "Budi",
-      kasir: "Kasir 2",
-      produk: "New Balance 530",
-      qty: 1,
-      metode: "Transfer",
-      total: 2100000,
-      status: "Selesai",
-      tanggal: "19 Mei 2026",
-    },
-  ];
-
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter((item) =>
-      item.invoice.toLowerCase().includes(search.toLowerCase()),
-    );
-  }, [search]);
-
-  const [selectedInvoice, setSelectedInvoice] = useState(
-    transactions[0].invoice,
+ const filteredTransactions = useMemo(() => {
+  return transactions.filter((item: any) =>
+    item.invoice_number
+      ?.toLowerCase()
+      .includes(search.toLowerCase()),
   );
+}, [transactions, search]);
 
-  const selectedTransaction = transactions.find(
-    (item) => item.invoice === selectedInvoice,
+  const [selectedInvoice, setSelectedInvoice] =
+  useState("");
+
+  useEffect(() => {
+  fetchTransactions();
+}, []);
+
+useEffect(() => {
+  if (
+    transactions.length > 0 &&
+    !selectedInvoice
+  ) {
+    setSelectedInvoice(
+      transactions[0].invoice_number,
+    );
+  }
+}, [
+  transactions,
+  selectedInvoice,
+]);
+
+const fetchTransactions =
+  async () => {
+    try {
+      setLoading(true);
+
+      const response =
+        await fetch(API_URL, {
+          cache: "no-store",
+        });
+
+      const data =
+        await response.json();
+
+      setTransactions(data);
+    } catch (error) {
+      console.error(
+        "Gagal mengambil transaksi",
+        error,
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const selectedTransaction =
+  transactions.find(
+    (item: any) =>
+      item.invoice_number ===
+      selectedInvoice,
   );
 
   const handlePrint = () => {
     window.print();
   };
+
+const downloadPDF = () => {
+  if (!selectedTransaction) return;
+
+  const doc = new jsPDF();
+
+  let y = 20;
+
+  doc.setFontSize(20);
+  doc.setFont("helvetica", "bold");
+  doc.text(
+    "DANA STOCKROOM",
+    105,
+    y,
+    { align: "center" },
+  );
+
+  y += 8;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+
+  doc.text(
+    "Premium Sneakers & Care",
+    105,
+    y,
+    { align: "center" },
+  );
+
+  y += 5;
+
+  doc.text(
+    "Bandung, Indonesia",
+    105,
+    y,
+    { align: "center" },
+  );
+
+  y += 10;
+
+  doc.line(20, y, 190, y);
+
+  y += 10;
+
+  doc.text(
+    `Invoice : ${selectedTransaction.invoice_number}`,
+    20,
+    y,
+  );
+
+  y += 8;
+
+  doc.text(
+    `Customer : ${selectedTransaction.customer_name}`,
+    20,
+    y,
+  );
+
+  y += 8;
+
+  doc.text(
+    `Status : ${selectedTransaction.status}`,
+    20,
+    y,
+  );
+
+  y += 8;
+
+  doc.text(
+    `Jenis : ${selectedTransaction.type}`,
+    20,
+    y,
+  );
+
+  y += 8;
+
+  doc.text(
+    `Tanggal : ${new Date(
+      selectedTransaction.created_at,
+    ).toLocaleString("id-ID")}`,
+    20,
+    y,
+  );
+
+  y += 12;
+
+  doc.line(20, y, 190, y);
+
+  y += 10;
+
+  doc.setFont(
+    "helvetica",
+    "bold",
+  );
+
+  doc.text(
+    "DETAIL ITEM",
+    20,
+    y,
+  );
+
+  doc.setFont(
+    "helvetica",
+    "normal",
+  );
+
+  selectedTransaction.details.forEach(
+    (detail: any) => {
+      y += 10;
+
+      const nama =
+        detail.product?.nama ||
+        detail.jasa_name;
+
+      const harga =
+        Number(detail.price);
+
+      const subtotal =
+        harga *
+        detail.quantity;
+
+      doc.text(
+        nama,
+        20,
+        y,
+      );
+
+      y += 6;
+
+      doc.text(
+        `Qty : ${detail.quantity}`,
+        25,
+        y,
+      );
+
+      y += 6;
+
+      doc.text(
+        `Harga : Rp ${harga.toLocaleString(
+          "id-ID",
+        )}`,
+        25,
+        y,
+      );
+
+      y += 6;
+
+      doc.text(
+        `Subtotal : Rp ${subtotal.toLocaleString(
+          "id-ID",
+        )}`,
+        25,
+        y,
+      );
+    },
+  );
+
+  y += 10;
+
+  doc.line(20, y, 190, y);
+
+  y += 10;
+
+  doc.setFont(
+    "helvetica",
+    "bold",
+  );
+
+  doc.text(
+    `TOTAL : Rp ${Number(
+      selectedTransaction.total,
+    ).toLocaleString("id-ID")}`,
+    20,
+    y,
+  );
+
+  y += 15;
+
+  doc.setFont(
+    "helvetica",
+    "normal",
+  );
+
+  doc.text(
+    "Terima Kasih Telah Berbelanja",
+    105,
+    y,
+    { align: "center" },
+  );
+
+  y += 6;
+
+  doc.text(
+    "Barang yang sudah dibeli tidak dapat ditukar atau dikembalikan",
+    105,
+    y,
+    { align: "center" },
+  );
+
+  doc.save(
+    `${selectedTransaction.invoice_number}.pdf`,
+  );
+};
 
   return (
     <div className="space-y-6">
@@ -134,11 +353,13 @@ export default function CetakStrukKasirPage() {
               dark:text-white
             ">
             {filteredTransactions.map((item) => (
-              <option
-                key={item.invoice}
-                value={item.invoice}>
-                {item.invoice}
-              </option>
+            <option
+              key={item.id}
+              value={
+                item.invoice_number
+              }>
+              {item.invoice_number}
+            </option>
             ))}
           </select>
         </div>
@@ -177,22 +398,24 @@ export default function CetakStrukKasirPage() {
               <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                 <div className="flex justify-between">
                   <span>Invoice</span>
-                  <span>{selectedTransaction.invoice}</span>
+                  <span>{selectedTransaction.invoice_number}</span>
                 </div>
 
                 <div className="flex justify-between">
                   <span>Customer</span>
-                  <span>{selectedTransaction.customer}</span>
+                  <span>{selectedTransaction.customer_name}</span>
                 </div>
 
                 <div className="flex justify-between">
                   <span>Kasir</span>
-                  <span>{selectedTransaction.kasir}</span>
+                  <span>Kasir Utama</span>
                 </div>
 
                 <div className="flex justify-between">
                   <span>Tanggal</span>
-                  <span>{selectedTransaction.tanggal}</span>
+                  <span>{new Date(
+                    selectedTransaction.created_at,
+                  ).toLocaleString("id-ID")}</span>
                 </div>
               </div>
 
@@ -201,27 +424,31 @@ export default function CetakStrukKasirPage() {
               {/* ITEM */}
               <div className="space-y-3">
                 <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Produk
+                  Detail Item
                 </div>
 
-                <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300">
-                  <div>
-                    <p>{selectedTransaction.produk}</p>
+                {selectedTransaction.details.map(
+                  (
+                    detail: any,
+                    index: number,
+                  ) => (
+                    <div
+                      key={index}
+                      className="flex justify-between text-sm text-gray-700 dark:text-gray-300">
+                      <div>
+                        <p>
+                          {detail.product?.nama ||
+                            detail.jasa_name}
+                        </p>
 
-                    <span className="text-xs text-gray-500">
-                      x{selectedTransaction.qty}
-                    </span>
-                  </div>
-
-                  <span>
-                    {formatRupiah(
-                      selectedTransaction.total,
-                    )}
-                  </span>
-                </div>
+                        <span className="text-xs text-gray-500">
+                          x{detail.quantity}
+                        </span>
+                      </div>
+                    </div>
+                  ),
+                )}
               </div>
-
-              <div className="my-6 border-t border-dashed border-gray-300 dark:border-white/10" />
 
               {/* TOTAL */}
               <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
@@ -229,16 +456,18 @@ export default function CetakStrukKasirPage() {
                   <span>Subtotal</span>
 
                   <span>
-                    {formatRupiah(
+                  {formatRupiah(
+                    Number(
                       selectedTransaction.total,
-                    )}
+                    ),
+                  )}
                   </span>
                 </div>
 
                 <div className="flex justify-between">
                   <span>Metode</span>
                   <span>
-                    {selectedTransaction.metode}
+                    <span>Cash</span>
                   </span>
                 </div>
 
@@ -277,19 +506,20 @@ export default function CetakStrukKasirPage() {
           Print Struk
         </button>
 
-        <button
-          className="
-            rounded-2xl
-            bg-green-500
-            px-6
-            py-3
-            font-semibold
-            text-white
-            transition
-            hover:bg-green-600
-          ">
-          Download PDF
-        </button>
+      <button
+        onClick={downloadPDF}
+        className="
+          rounded-2xl
+          bg-green-500
+          px-6
+          py-3
+          font-semibold
+          text-white
+          transition
+          hover:bg-green-600
+        ">
+        Download PDF
+      </button>
       </div>
     </div>
   );

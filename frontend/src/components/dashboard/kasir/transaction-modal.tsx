@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import jsPDF from "jspdf";
+
 
 const JASA_LIST = [
   { nama: "Reglue (LEM)", price: 100000 },
@@ -36,6 +38,14 @@ export function TransactionModal({
   });
   
   const [uangMasuk, setUangMasuk] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [paymentAmount, setPaymentAmount] = useState(0);
+  const [proofChecked, setProofChecked] = useState(false);
+  const [showReceipt, setShowReceipt] =
+  useState(false);
+
+const [receiptData, setReceiptData] =
+  useState<any>(null);
 
   const addToCart = (item: any) => {
     const isJasa = isJasaMode;
@@ -50,38 +60,342 @@ export function TransactionModal({
   };
 
   const totalHarga = cart.reduce((acc, item) => acc + (item.harga_jual || item.price) * item.qty, 0);
-  const kembalian = uangMasuk - totalHarga;
+  const kembalian =
+  paymentMethod === "cash"
+    ? uangMasuk - totalHarga
+    : paymentAmount - totalHarga;
 
   const handleSubmit = async () => {
-    const items = cart.map(item => ({
-      product_id: isJasaMode ? null : item.id,
-      jasa_name: isJasaMode ? (item.nama || item.name) : null,
-      quantity: item.qty,
-      price: item.harga_jual || item.price,
-      is_jasa: isJasaMode
-    }));
-    
-    const res = await fetch("http://127.0.0.1:8000/api/transactions", {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}` 
-      },
-      body: JSON.stringify({ 
-        total: totalHarga, 
-        items: items, 
-        type: isJasaMode ? 'jasa' : 'produk',
-        customer_name: 'Pelanggan Umum'
+    if (cart.length === 0) {
+  alert("Keranjang masih kosong");
+  return;
+}
+
+if (paymentMethod === "cash") {
+  if (uangMasuk < totalHarga) {
+    alert("Uang tunai kurang");
+    return;
+  }
+}
+
+if (
+  paymentMethod !== "cash" &&
+  (!paymentAmount || !proofChecked)
+) {
+  alert(
+    "Nominal pembayaran dan bukti transaksi wajib diisi"
+  );
+  return;
+}
+  try {
+    const items = cart.map(
+      (item) => ({
+        product_id:
+          isJasaMode
+            ? null
+            : item.id,
+
+        jasa_name:
+          isJasaMode
+            ? item.nama ||
+              item.name
+            : null,
+
+        quantity:
+          item.qty,
+
+        price:
+          item.harga_jual ||
+          item.price,
+
+        is_jasa:
+          isJasaMode,
       }),
+    );
+
+    const res =
+      await fetch(
+        "http://127.0.0.1:8000/api/transactions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            Authorization: `Bearer ${localStorage.getItem(
+              "token",
+            )}`,
+          },
+
+          body: JSON.stringify({
+            total:
+              totalHarga,
+
+            items,
+
+            type:
+              isJasaMode
+                ? "jasa"
+                : "produk",
+
+            customer_name:
+              "Pelanggan Umum",
+          }),
+        },
+      );
+
+    const result =
+      await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        result.message,
+      );
+    }
+
+    setReceiptData({
+      invoice:
+        result.invoice,
+
+      items: cart,
+
+      total:
+        totalHarga,
+
+      uangMasuk,
+
+      kembalian,
     });
 
-    if (res.ok) {
-        onSuccess();
-    } else {
-        const errorData = await res.json();
-        alert(errorData.message || "Gagal melakukan transaksi");
-    }
-  };
+    setShowReceipt(true);
+
+  } catch (error: any) {
+    alert(
+      error.message ||
+        "Gagal melakukan transaksi",
+    );
+  }
+};
+const handlePrint = () => {
+  window.print();
+};
+
+const downloadPDF = () => {
+  if (!receiptData) return;
+
+  const doc = new jsPDF();
+
+  let y = 20;
+
+  doc.setFontSize(20);
+  doc.text(
+    "DANA STOCKROOM",
+    105,
+    y,
+    { align: "center" },
+  );
+
+  y += 8;
+
+  doc.setFontSize(10);
+  doc.text(
+    "Premium Shoes & Care",
+    105,
+    y,
+    { align: "center" },
+  );
+
+  y += 10;
+
+  doc.line(20, y, 190, y);
+
+  y += 10;
+
+  doc.setFontSize(11);
+
+  doc.text(
+    `Invoice : ${receiptData.invoice}`,
+    20,
+    y,
+  );
+
+  y += 8;
+
+  doc.text(
+    `Tanggal : ${new Date().toLocaleString(
+      "id-ID",
+    )}`,
+    20,
+    y,
+  );
+
+  y += 8;
+
+  doc.text(
+    "Kasir : Kasir Utama",
+    20,
+    y,
+  );
+
+  y += 8;
+
+  doc.text(
+    "Customer : Pelanggan Umum",
+    20,
+    y,
+  );
+
+  y += 10;
+
+  doc.line(20, y, 190, y);
+
+  y += 10;
+
+  doc.setFontSize(12);
+
+  doc.text(
+    "DETAIL TRANSAKSI",
+    20,
+    y,
+  );
+
+  y += 10;
+
+  receiptData.items.forEach(
+    (
+      item: any,
+      index: number,
+    ) => {
+      const harga =
+        item.harga_jual ||
+        item.price;
+
+      const subtotal =
+        harga * item.qty;
+
+      doc.setFontSize(11);
+
+      doc.text(
+        `${index + 1}. ${
+          item.nama ||
+          item.name
+        }`,
+        20,
+        y,
+      );
+
+      y += 7;
+
+      doc.text(
+        `Qty : ${item.qty}`,
+        30,
+        y,
+      );
+
+      y += 7;
+
+      doc.text(
+        `Harga : Rp ${harga.toLocaleString()}`,
+        30,
+        y,
+      );
+
+      y += 7;
+
+      doc.text(
+        `Subtotal : Rp ${subtotal.toLocaleString()}`,
+        30,
+        y,
+      );
+
+      y += 10;
+    },
+  );
+
+  doc.line(20, y, 190, y);
+
+  y += 10;
+
+  doc.setFontSize(12);
+
+  doc.text(
+    `Total Belanja : Rp ${receiptData.total.toLocaleString()}`,
+    20,
+    y,
+  );
+
+  y += 8;
+
+  doc.text(
+    `Uang Tunai : Rp ${receiptData.uangMasuk.toLocaleString()}`,
+    20,
+    y,
+  );
+
+  y += 8;
+
+  doc.text(
+    `Kembalian : Rp ${receiptData.kembalian.toLocaleString()}`,
+    20,
+    y,
+  );
+
+  y += 8;
+
+  doc.text(
+    "Status : Selesai",
+    20,
+    y,
+  );
+
+  y += 15;
+
+  doc.line(20, y, 190, y);
+
+  y += 15;
+
+  doc.setFontSize(12);
+
+  doc.text(
+    "Terima kasih telah berbelanja",
+    105,
+    y,
+    { align: "center" },
+  );
+
+  y += 7;
+
+  doc.text(
+    "di Dana Stockroom",
+    105,
+    y,
+    { align: "center" },
+  );
+
+  y += 15;
+
+  doc.setFontSize(10);
+
+  doc.text(
+    "Instagram : @danastockroom",
+    105,
+    y,
+    { align: "center" },
+  );
+
+  y += 6;
+
+  doc.text(
+    "www.danastockroom.com",
+    105,
+    y,
+    { align: "center" },
+  );
+
+  doc.save(
+    `${receiptData.invoice}.pdf`,
+  );
+};
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
@@ -144,6 +458,110 @@ export function TransactionModal({
           </div>
         </div>
       </div>
+            {showReceipt &&
+        receiptData && (
+          <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70">
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 text-black">
+
+              <h2 className="mb-4 text-center text-2xl font-bold">
+                Dana Stockroom
+              </h2>
+
+              <p>
+                Invoice :
+                {" "}
+                {receiptData.invoice}
+              </p>
+
+              <hr className="my-3" />
+
+              {receiptData.items.map(
+                (
+                  item: any,
+                  index: number,
+                ) => (
+                  <div
+                    key={index}
+                    className="flex justify-between text-sm">
+                    <span>
+                      {item.nama ||
+                        item.name}
+                      {" "}
+                      x
+                      {item.qty}
+                    </span>
+
+                    <span>
+                      Rp
+                      {" "}
+                      {(
+                        (item.harga_jual ||
+                          item.price) *
+                        item.qty
+                      ).toLocaleString()}
+                    </span>
+                  </div>
+                ),
+              )}
+
+              <hr className="my-3" />
+
+              <p>
+                Total :
+                {" "}
+                Rp
+                {" "}
+                {receiptData.total.toLocaleString()}
+              </p>
+
+              <p>
+                Bayar :
+                {" "}
+                Rp
+                {" "}
+                {receiptData.uangMasuk.toLocaleString()}
+              </p>
+
+              <p>
+                Kembalian :
+                {" "}
+                Rp
+                {" "}
+                {receiptData.kembalian.toLocaleString()}
+              </p>
+
+              <div className="mt-6 flex gap-2">
+                <button
+                  onClick={
+                    handlePrint
+                  }
+                  className="flex-1 rounded-lg bg-green-600 py-2 text-white">
+                  Print
+                </button>
+
+                <button
+                  onClick={
+                    downloadPDF
+                  }
+                  className="flex-1 rounded-lg bg-blue-600 py-2 text-white">
+                  Download PDF
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowReceipt(
+                      false,
+                    );
+                    onSuccess();
+                    onClose();
+                  }}
+                  className="flex-1 rounded-lg bg-gray-600 py-2 text-white">
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+      )}
     </div>
   );
 }

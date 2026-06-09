@@ -1,9 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Card from "@/components/ui/card";
 import { formatRupiah } from "@/lib/format-rupiah";
+
+const API_URL =
+  "http://127.0.0.1:8000/api/transactions";
 
 type TransactionType = {
   id: number;
@@ -17,60 +20,128 @@ type TransactionType = {
 };
 
 export default function RiwayatTransaksiKasirPage() {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] =
+    useState("");
+
   const [statusFilter, setStatusFilter] =
     useState("Semua");
 
-  const [transactions] =
-    useState<TransactionType[]>([
-      {
-        id: 1,
-        invoice: "INV-001",
-        kasir: "Kasir A",
-        produk: "Nike Air Force 1",
-        metode: "QRIS",
-        total: 3700000,
-        status: "Selesai",
-        tanggal: "20 Mei 2026",
-      },
+  const [loading, setLoading] =
+    useState(true);
 
-      {
-        id: 2,
-        invoice: "INV-002",
-        kasir: "Kasir B",
-        produk: "Adidas Samba",
-        metode: "Cash",
-        total: 1650000,
-        status: "Pending",
-        tanggal: "20 Mei 2026",
-      },
+  const [transactions, setTransactions] =
+    useState<TransactionType[]>([]);
 
-      {
-        id: 3,
-        invoice: "INV-003",
-        kasir: "Kasir A",
-        produk: "New Balance 530",
-        metode: "Transfer",
-        total: 2100000,
-        status: "Dibatalkan",
-        tanggal: "19 Mei 2026",
-      },
+  const [selectedTransaction, setSelectedTransaction] =
+  useState<any>(null);
 
-      {
-        id: 4,
-        invoice: "INV-004",
-        kasir: "Kasir C",
-        produk: "Converse High",
-        metode: "QRIS",
-        total: 950000,
-        status: "Selesai",
-        tanggal: "19 Mei 2026",
-      },
-    ]);
+const [isDetailOpen, setIsDetailOpen] =
+  useState(false);
 
-  /* =========================
-     FILTER
-  ========================= */
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+
+  const handleDetail = async (
+  id: number,
+) => {
+  try {
+    const response =
+      await fetch(
+        `${API_URL}/${id}`,
+      );
+
+    const data =
+      await response.json();
+
+    setSelectedTransaction(
+      data,
+    );
+
+    setIsDetailOpen(true);
+  } catch (error) {
+    console.error(
+      "Gagal mengambil detail transaksi:",
+      error,
+    );
+
+    alert(
+      "Gagal mengambil detail transaksi",
+    );
+  }
+};
+
+  const fetchTransactions =
+    async () => {
+      try {
+        setLoading(true);
+
+        const response =
+          await fetch(API_URL, {
+            cache: "no-store",
+          });
+
+        const data =
+          await response.json();
+
+        const mappedData =
+          data.map((trx: any) => {
+            const detail =
+              trx.details?.[0];
+
+            return {
+              id: trx.id,
+
+              invoice:
+                trx.invoice_number,
+
+              kasir:
+                trx.cashier_name ||
+                "Kasir Utama",
+
+              produk:
+                detail?.product?.nama ||
+                detail?.jasa_name ||
+                "-",
+
+              metode:
+                trx.payment_method ||
+                "-",
+
+              total: Number(
+                trx.total,
+              ),
+
+              status:
+                trx.status,
+
+              tanggal:
+                new Date(
+                  trx.created_at,
+                ).toLocaleDateString(
+                  "id-ID",
+                  {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  },
+                ),
+            };
+          });
+
+        setTransactions(
+          mappedData,
+        );
+      } catch (error) {
+        console.error(
+          "Gagal mengambil riwayat transaksi:",
+          error,
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
   const filteredTransactions =
     useMemo(() => {
       return transactions.filter(
@@ -110,9 +181,6 @@ export default function RiwayatTransaksiKasirPage() {
       statusFilter,
     ]);
 
-  /* =========================
-     STATS
-  ========================= */
   const selesaiCount =
     transactions.filter(
       (item) =>
@@ -136,7 +204,6 @@ export default function RiwayatTransaksiKasirPage() {
 
   return (
     <div className="space-y-6">
-      {/* HEADER */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
           Riwayat Transaksi
@@ -149,7 +216,6 @@ export default function RiwayatTransaksiKasirPage() {
         </p>
       </div>
 
-      {/* STATS */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-4">
         <Card className="border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -192,9 +258,7 @@ export default function RiwayatTransaksiKasirPage() {
         </Card>
       </div>
 
-      {/* TABLE */}
       <Card className="border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
-        {/* SEARCH + FILTER */}
         <div className="mb-6 flex flex-col gap-4 lg:flex-row">
           <input
             type="text"
@@ -224,44 +288,47 @@ export default function RiwayatTransaksiKasirPage() {
           />
 
           <select
-            value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(
-                e.target.value,
-              )
-            }
-            className="
-              rounded-2xl
-              border
-              border-gray-200
-              bg-gray-100
-              px-4
-              py-3
-              text-gray-900
-              outline-none
+          value={statusFilter}
+          onChange={(
+            e: React.ChangeEvent<HTMLSelectElement>,
+          ) => {
+            setStatusFilter(
+              e.target.value,
+            );
+          }}
+          className="
+            rounded-2xl
+            border
+            border-gray-200
+            bg-gray-100
+            px-4
+            py-3
+            text-gray-900
 
-              dark:border-white/10
-              dark:bg-[#1E293B]
-              dark:text-white
-            ">
-            <option>
-              Semua
-            </option>
-            <option>
-              Selesai
-            </option>
-            <option>
-              Pending
-            </option>
-            <option>
-              Dibatalkan
-            </option>
-          </select>
+            dark:border-white/10
+            dark:bg-[#1E293B]
+            dark:text-white
+          ">
+          <option value="Semua">
+            Semua
+          </option>
+
+          <option value="Selesai">
+            Selesai
+          </option>
+
+          <option value="Pending">
+            Pending
+          </option>
+
+          <option value="Dibatalkan">
+            Dibatalkan
+          </option>
+        </select>
         </div>
 
-        {/* TABLE */}
         <div className="-mx-6 overflow-x-auto">
-          <div className="min-w-[1100px] px-6">
+          <div className="min-w-[1000px] px-6">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-white/10">
@@ -300,50 +367,60 @@ export default function RiwayatTransaksiKasirPage() {
               </thead>
 
               <tbody>
-                {filteredTransactions.map(
-                  (item) => (
-                    <tr
-                      key={item.id}
-                      className="border-b border-gray-200 dark:border-white/5">
-                      <td className="py-5 font-semibold text-gray-900 dark:text-white">
-                        {
-                          item.invoice
-                        }
-                      </td>
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan={8}
+                      className="py-10 text-center text-white">
+                      Loading...
+                    </td>
+                  </tr>
+                ) : filteredTransactions.length ===
+                  0 ? (
+                  <tr>
+                    <td
+                      colSpan={8}
+                      className="py-10 text-center text-white">
+                      Tidak ada data
+                    </td>
+                  </tr>
+                ) : (
+                  filteredTransactions.map(
+                    (item) => (
+                      <tr
+                        key={item.id}
+                        className="border-b border-gray-200 dark:border-white/5">
+                        <td className="py-5 font-semibold text-white">
+                          {
+                            item.invoice
+                          }
+                        </td>
 
-                      <td className="py-5 text-gray-700 dark:text-gray-300">
-                        {
-                          item.kasir
-                        }
-                      </td>
+                        <td className="py-5 text-gray-300">
+                          {item.kasir}
+                        </td>
 
-                      <td className="py-5 text-gray-700 dark:text-gray-300">
-                        {
-                          item.produk
-                        }
-                      </td>
+                        <td className="py-5 text-gray-300">
+                          {
+                            item.produk
+                          }
+                        </td>
 
-                      <td className="py-5 text-gray-700 dark:text-gray-300">
-                        {
-                          item.metode
-                        }
-                      </td>
+                        <td className="py-5 text-gray-300">
+                          {
+                            item.metode
+                          }
+                        </td>
 
-                      <td className="py-5 font-semibold text-gray-900 dark:text-white">
-                        {formatRupiah(
-                          item.total,
-                        )}
-                      </td>
+                        <td className="py-5 font-semibold text-white">
+                          {formatRupiah(
+                            item.total,
+                          )}
+                        </td>
 
-                      <td className="py-5">
-                        <span
-                          className={`
-                            rounded-full
-                            px-3
-                            py-1
-                            text-xs
-                            font-semibold
-                            ${
+                        <td className="py-5">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
                               item.status ===
                               "Selesai"
                                 ? "bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400"
@@ -351,65 +428,194 @@ export default function RiwayatTransaksiKasirPage() {
                                     "Pending"
                                   ? "bg-yellow-100 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400"
                                   : "bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
+                            }`}>
+                            {
+                              item.status
                             }
-                          `}>
+                          </span>
+                        </td>
+
+                        <td className="py-5 text-gray-300">
                           {
-                            item.status
+                            item.tanggal
                           }
-                        </span>
-                      </td>
+                        </td>
 
-                      <td className="py-5 text-gray-700 dark:text-gray-300">
-                        {
-                          item.tanggal
+                        <td className="py-5">
+                      <button
+                        onClick={() =>
+                          handleDetail(
+                            item.id,
+                          )
                         }
-                      </td>
+                        className="
+                          rounded-xl
+                          bg-sky-100
+                          px-4
+                          py-2
+                          text-sm
+                          font-medium
+                          text-sky-600
 
-                      <td className="py-5">
-                        <div className="flex items-center gap-3">
-                          <button
-                            className="
-                              rounded-xl
-                              bg-sky-100
-                              px-4
-                              py-2
-                              text-sm
-                              font-medium
-                              text-sky-600
-                              hover:bg-sky-200
-
-                              dark:bg-sky-500/20
-                              dark:text-sky-400
-                            ">
-                            Detail
-                          </button>
-
-                          <button
-                            className="
-                              rounded-xl
-                              bg-green-100
-                              px-4
-                              py-2
-                              text-sm
-                              font-medium
-                              text-green-600
-                              hover:bg-green-200
-
-                              dark:bg-green-500/20
-                              dark:text-green-400
-                            ">
-                            Cetak Ulang
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ),
+                          dark:bg-sky-500/20
+                          dark:text-sky-400
+                        ">
+                        Detail
+                      </button>
+                        </td>
+                      </tr>
+                    ),
+                  )
                 )}
               </tbody>
             </table>
           </div>
         </div>
+        {isDetailOpen &&
+  selectedTransaction && (
+    <div
+      className="
+        fixed
+        inset-0
+        z-50
+        flex
+        items-center
+        justify-center
+        bg-black/60
+        p-4
+      ">
+      <div
+        className="
+          w-full
+          max-w-2xl
+          rounded-2xl
+          bg-[#0F172A]
+          p-6
+          text-white
+        ">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-xl font-bold">
+            Detail Transaksi
+          </h2>
+
+          <button
+            onClick={() =>
+              setIsDetailOpen(
+                false,
+              )
+            }
+            className="text-gray-400 hover:text-white">
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <p>
+            <strong>
+              Invoice:
+            </strong>{" "}
+            {
+              selectedTransaction.invoice_number
+            }
+          </p>
+
+          <p>
+            <strong>
+              Customer:
+            </strong>{" "}
+            {
+              selectedTransaction.customer_name
+            }
+          </p>
+
+          <p>
+            <strong>
+              Status:
+            </strong>{" "}
+            {
+              selectedTransaction.status
+            }
+          </p>
+
+          <p>
+            <strong>
+              Total:
+            </strong>{" "}
+            {formatRupiah(
+              Number(
+                selectedTransaction.total,
+              ),
+            )}
+          </p>
+
+          <p>
+            <strong>
+              Tanggal:
+            </strong>{" "}
+            {new Date(
+              selectedTransaction.created_at,
+            ).toLocaleString(
+              "id-ID",
+            )}
+          </p>
+        </div>
+
+        <div className="mt-6">
+          <h3 className="mb-3 font-semibold">
+            Detail Item
+          </h3>
+
+          <div className="space-y-2">
+            {selectedTransaction.details?.map(
+              (
+                detail: any,
+                index: number,
+              ) => (
+                <div
+                  key={index}
+                  className="
+                    rounded-lg
+                    border
+                    border-white/10
+                    p-3
+                  ">
+                  <p>
+                    Produk:
+                    {" "}
+                    {detail
+                      ?.product
+                      ?.nama ||
+                      detail?.jasa_name ||
+                      "-"}
+                  </p>
+
+                  <p>
+                    Qty:
+                    {" "}
+                    {
+                      detail.quantity
+                    }
+                  </p>
+
+                  <p>
+                    Harga:
+                    {" "}
+                    {formatRupiah(
+                      Number(
+                        detail.price,
+                      ),
+                    )}
+                  </p>
+                </div>
+              ),
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+)}
       </Card>
     </div>
+    
   );
 }

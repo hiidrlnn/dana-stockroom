@@ -21,13 +21,32 @@ Route::post('/login', [AuthController::class, 'login']);
 |--------------------------------------------------------------------------
 | DASHBOARD
 |--------------------------------------------------------------------------
-|
-| Dibuat public agar dashboard Next.js bisa membaca statistik
-| tanpa error Sanctum.
-|
 */
 
 Route::get('/dashboard', [DashboardController::class, 'index']);
+
+/*
+|--------------------------------------------------------------------------
+| PRODUCTS
+|--------------------------------------------------------------------------
+| Sementara dibuat public untuk frontend Next.js
+|--------------------------------------------------------------------------
+*/
+
+Route::apiResource('products', ProductController::class);
+
+/*
+|--------------------------------------------------------------------------
+| TRANSACTIONS
+|--------------------------------------------------------------------------
+| Sementara dibuat public untuk frontend Next.js
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/transactions', [TransactionController::class, 'index']);
+Route::post('/transactions', [TransactionController::class, 'store']);
+Route::get('/transactions/{id}', [TransactionController::class, 'show']);
+Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);
 
 /*
 |--------------------------------------------------------------------------
@@ -37,21 +56,9 @@ Route::get('/dashboard', [DashboardController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
-    /*
-    |--------------------------------------------------------------------------
-    | USER
-    |--------------------------------------------------------------------------
-    */
-
     Route::get('/user', function (Request $request) {
         return response()->json($request->user());
     });
-
-    /*
-    |--------------------------------------------------------------------------
-    | PROFILE
-    |--------------------------------------------------------------------------
-    */
 
     Route::get('/profile', [AuthController::class, 'profile']);
 
@@ -59,43 +66,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::put('/update-profile', [AuthController::class, 'updateProfile']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | PASSWORD
-    |--------------------------------------------------------------------------
-    */
-
     Route::post('/password/change', [AuthController::class, 'changePassword']);
 
     Route::put('/change-password', [AuthController::class, 'changePassword']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | AUTH
-    |--------------------------------------------------------------------------
-    */
-
     Route::post('/logout', [AuthController::class, 'logout']);
-
-    /*
-    |--------------------------------------------------------------------------
-    | PRODUCTS
-    |--------------------------------------------------------------------------
-    */
-
-    Route::apiResource('products', ProductController::class);
-
-    /*
-    |--------------------------------------------------------------------------
-    | TRANSACTIONS
-    |--------------------------------------------------------------------------
-    */
-
-    Route::get('/transactions', [TransactionController::class, 'index']);
-
-    Route::post('/transactions', [TransactionController::class, 'store']);
-
-    Route::get('/transactions/{id}', [TransactionController::class, 'show']);
-
-    Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);
 });

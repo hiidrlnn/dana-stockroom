@@ -28,33 +28,92 @@ export default function DashboardKasirPage() {
   const products = Array.isArray(productsData) ? productsData : (productsData?.data || []);
   const transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData?.data || []);
 
-  const stats = useMemo(() => {
-    if (!transactions.length) return { pendapatan: 0, jumlahTransaksi: 0, produkTerjual: 0, jasaMasuk: 0 };
-    
-    const today = new Date().toISOString().split('T')[0];
-    const todayTransactions = transactions.filter((t: any) => t.created_at?.startsWith(today));
-    
-    // Total pendapatan dari semua transaksi hari ini
-    const pendapatan = todayTransactions.reduce((sum: number, t: any) => sum + Number(t.total || 0), 0);
-    
-    // Filter khusus transaksi produk untuk menghitung quantity terjual
-    const produkTerjual = todayTransactions
-      .filter((t: any) => t.type === 'produk')
-      .reduce((sum: number, t: any) => {
-        const itemQty = (t.items || []).reduce((s: number, i: any) => s + (Number(i.quantity) || 0), 0);
-        return sum + itemQty;
-      }, 0);
-
-    // Hitung jumlah transaksi jasa
-    const jasaMasuk = todayTransactions.filter((t: any) => t.type === 'jasa').length;
-
-    return { 
-      pendapatan,
-      jumlahTransaksi: todayTransactions.length, 
-      produkTerjual,
-      jasaMasuk
+ const stats = useMemo(() => {
+  if (!transactions.length) {
+    return {
+      pendapatan: 0,
+      jumlahTransaksi: 0,
+      produkTerjual: 0,
+      jasaMasuk: 0,
     };
-  }, [transactions]);
+  }
+
+  const today =
+    new Date()
+      .toISOString()
+      .split("T")[0];
+
+  const todayTransactions =
+    transactions.filter(
+      (t: any) =>
+        t.created_at?.startsWith(
+          today,
+        ),
+    );
+
+  const pendapatan =
+    todayTransactions.reduce(
+      (
+        sum: number,
+        t: any,
+      ) =>
+        sum +
+        Number(
+          t.total || 0,
+        ),
+      0,
+    );
+
+  const produkTerjual =
+    todayTransactions
+      .filter(
+        (t: any) =>
+          t.type ===
+          "produk",
+      )
+      .reduce(
+        (
+          sum: number,
+          t: any,
+        ) => {
+          const qty =
+            (
+              t.details ||
+              []
+            ).reduce(
+              (
+                subtotal: number,
+                detail: any,
+              ) =>
+                subtotal +
+                Number(
+                  detail.quantity ||
+                    0,
+                ),
+              0,
+            );
+
+          return (
+            sum + qty
+          );
+        },
+        0,
+      );
+
+  const jasaMasuk =
+    todayTransactions.filter(
+      (t: any) =>
+        t.type === "jasa",
+    ).length;
+
+  return {
+    pendapatan,
+    jumlahTransaksi:
+      todayTransactions.length,
+    produkTerjual,
+    jasaMasuk,
+  };
+}, [transactions]);
 
   const handleTransactionSuccess = () => {
     mutate("http://127.0.0.1:8000/api/products");

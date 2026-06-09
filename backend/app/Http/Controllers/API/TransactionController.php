@@ -12,11 +12,13 @@ use Illuminate\Support\Facades\DB;
 class TransactionController extends Controller
 {
     public function index()
-    {
-        // Mengambil transaksi terbaru dengan detailnya
-        // Pastikan relasi 'details' ada di Model Transaction
-        return Transaction::with('details')->latest()->take(10)->get();
-    }
+{
+    return Transaction::with([
+        'details.product'
+    ])
+    ->latest()
+    ->get();
+}
 
     public function store(Request $request)
     {
@@ -84,4 +86,63 @@ class TransactionController extends Controller
             ], 400);
         }
     }
+
+public function show($id)
+{
+    $transaction = Transaction::with([
+        'details.product'
+    ])->find($id);
+
+    if (!$transaction) {
+        return response()->json([
+            'message' => 'Transaksi tidak ditemukan'
+        ], 404);
+    }
+
+    return response()->json($transaction);
+}
+
+public function destroy($id)
+{
+    DB::beginTransaction();
+
+    try {
+
+        $transaction = Transaction::with('details')
+            ->findOrFail($id);
+
+        foreach ($transaction->details as $detail) {
+
+            if ($detail->product_id) {
+
+                Product::where(
+                    'id',
+                    $detail->product_id
+                )->increment(
+                    'stok',
+                    $detail->quantity
+                );
+            }
+        }
+
+        $transaction->details()->delete();
+
+        $transaction->delete();
+
+        DB::commit();
+
+        return response()->json([
+            'message' => 'Transaksi berhasil dihapus'
+        ]);
+
+    } catch (\Exception $e) {
+
+        DB::rollBack();
+
+        return response()->json([
+            'message' => 'Gagal menghapus transaksi',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
 }
