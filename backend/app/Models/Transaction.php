@@ -4,24 +4,28 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Transaction extends Model
 {
+    use HasFactory;
+
     /**
      * Mengizinkan kolom-kolom ini untuk diisi (mass assignment)
-     * Ditambahkan kolom 'type' untuk membedakan Produk/Jasa
+     * Ditambahkan kolom 'type', 'payment_method', dan 'transfer_info'
      */
     protected $fillable = [
         'invoice_number', 
         'customer_name', 
         'total', 
         'status',
-        'type' // Tambahkan ini agar bisa menyimpan 'produk' atau 'jasa'
+        'type',           // untuk 'produk' atau 'jasa'
+        'payment_method', // untuk 'cash', 'qris', atau 'transfer'
+        'transfer_info'   // untuk nomor referensi atau nama pengirim
     ];
 
     /**
      * Mendefinisikan relasi ke TransactionDetail
-     * Ini akan memperbaiki error "Call to undefined relationship [details]"
      */
     public function details(): HasMany
     {

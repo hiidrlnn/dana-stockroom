@@ -12,26 +12,47 @@ use Illuminate\Support\Facades\DB;
 class TransactionController extends Controller
 {
     public function index()
-{
-    return Transaction::with([
-        'details.product'
-    ])
-    ->latest()
-    ->get();
-}
+    {
+        $transactions = Transaction::with(['details.product'])
+            ->latest()
+            ->get()
+            ->map(function ($transaction) {
+                return [
+                    'id'             => $transaction->id,
+                    'invoice_number' => $transaction->invoice_number,
+                    'customer_name'  => $transaction->customer_name,
+                    'total'          => $transaction->total,
+                    'status'         => $transaction->status,
+                    'type'           => $transaction->type,
+                    'payment_method' => $transaction->payment_method,
+                    'created_at'     => $transaction->created_at,
+                    'items'          => $transaction->details->map(function ($detail) {
+                        return [
+                            'sku'   => $detail->product ? $detail->product->sku : '-',
+                            'nama'  => $detail->product ? $detail->product->nama : $detail->jasa_name,
+                            'qty'   => $detail->quantity,
+                            'harga' => $detail->price,
+                        ];
+                    }),
+                ];
+            });
+
+        return response()->json($transactions);
+    }
 
     public function store(Request $request)
     {
-        // Validasi diperbarui: menambahkan jasa_name sebagai opsional
         $request->validate([
-            'customer_name' => 'nullable|string|max:255',
-            'items' => 'required|array|min:1',
+            'customer_name'  => 'nullable|string|max:255',
+            'items'          => 'required|array|min:1',
             'items.*.product_id' => 'nullable|exists:products,id',
-            'items.*.jasa_name' => 'nullable|string|max:255', // Validasi untuk jasa_name
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.price' => 'required|numeric',
-            'type' => 'required|in:produk,jasa',
-            'total' => 'required|numeric|min:0',
+            'items.*.jasa_name'  => 'nullable|string|max:255',
+            'items.*.quantity'   => 'required|integer|min:1',
+            'items.*.price'      => 'required|numeric',
+            'type'           => 'required|in:produk,jasa',
+            'total'          => 'required|numeric|min:0',
+            'payment_method' => 'required|in:cash,qris,transfer',
+            'transfer_info'  => 'nullable|string|max:255',
         ]);
 
         try {
@@ -39,18 +60,17 @@ class TransactionController extends Controller
 
             $invoiceNumber = 'INV-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -5));
             
-            // 1. Simpan Transaksi Utama
             $transaction = Transaction::create([
                 'invoice_number' => $invoiceNumber,
                 'customer_name'  => $request->customer_name ?? 'Umum',
                 'total'          => $request->total,
                 'type'           => $request->type,
+                'payment_method' => $request->payment_method,
+                'transfer_info'  => $request->transfer_info,
                 'status'         => 'Selesai'
             ]);
 
-            // 2. Proses Items
             foreach ($request->items as $item) {
-                // Jika produk, cek stok dan kurangi
                 if (!empty($item['product_id'])) {
                     $product = Product::lockForUpdate()->findOrFail($item['product_id']);
 
@@ -61,7 +81,6 @@ class TransactionController extends Controller
                     $product->decrement('stok', $item['quantity']);
                 }
 
-                // 3. Simpan Detail Transaksi
                 TransactionDetail::create([
                     'transaction_id' => $transaction->id,
                     'product_id'     => $item['product_id'] ?? null,
@@ -87,62 +106,53 @@ class TransactionController extends Controller
         }
     }
 
-public function show($id)
-{
-    $transaction = Transaction::with([
-        'details.product'
-    ])->find($id);
+    public function show($id)
+    {
+        $transaction = Transaction::with(['details.product'])->find($id);
 
-    if (!$transaction) {
-        return response()->json([
-            'message' => 'Transaksi tidak ditemukan'
-        ], 404);
-    }
-
-    return response()->json($transaction);
-}
-
-public function destroy($id)
-{
-    DB::beginTransaction();
-
-    try {
-
-        $transaction = Transaction::with('details')
-            ->findOrFail($id);
-
-        foreach ($transaction->details as $detail) {
-
-            if ($detail->product_id) {
-
-                Product::where(
-                    'id',
-                    $detail->product_id
-                )->increment(
-                    'stok',
-                    $detail->quantity
-                );
-            }
+        if (!$transaction) {
+            return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
         }
 
-        $transaction->details()->delete();
-
-        $transaction->delete();
-
-        DB::commit();
-
         return response()->json([
-            'message' => 'Transaksi berhasil dihapus'
+            'id'             => $transaction->id,
+            'invoice_number' => $transaction->invoice_number,
+            'customer_name'  => $transaction->customer_name,
+            'total'          => $transaction->total,
+            'status'         => $transaction->status,
+            'payment_method' => $transaction->payment_method,
+            'created_at'     => $transaction->created_at,
+            'items'          => $transaction->details->map(function ($detail) {
+                return [
+                    'sku'   => $detail->product ? $detail->product->sku : '-',
+                    'nama'  => $detail->product ? $detail->product->nama : $detail->jasa_name,
+                    'qty'   => $detail->quantity,
+                    'harga' => $detail->price,
+                ];
+            }),
         ]);
-
-    } catch (\Exception $e) {
-
-        DB::rollBack();
-
-        return response()->json([
-            'message' => 'Gagal menghapus transaksi',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
+
+    public function destroy($id)
+    {
+        DB::beginTransaction();
+        try {
+            $transaction = Transaction::with('details')->findOrFail($id);
+
+            foreach ($transaction->details as $detail) {
+                if ($detail->product_id) {
+                    Product::where('id', $detail->product_id)->increment('stok', $detail->quantity);
+                }
+            }
+
+            $transaction->details()->delete();
+            $transaction->delete();
+
+            DB::commit();
+            return response()->json(['message' => 'Transaksi berhasil dihapus']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Gagal menghapus transaksi', 'error' => $e->getMessage()], 500);
+        }
+    }
 }

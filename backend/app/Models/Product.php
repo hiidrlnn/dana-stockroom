@@ -11,24 +11,37 @@ class Product extends Model
 
     protected $table = 'products';
 
-    // Daftarkan semua field agar diizinkan menggunakan metode Mass Assignment (create/update)
+    // Mendefinisikan tipe data kolom untuk memastikan data API konsisten
+    protected $casts = [
+        'harga_beli' => 'integer',
+        'harga_jual' => 'integer',
+        'stok'       => 'integer',
+    ];
+
     protected $fillable = [
+        'sku',
         'nama',
         'kategori',
         'size',
-        'harga_beli', // Tambahkan ini agar modal tersimpan ke database
-        'harga_jual', // Tambahkan ini agar harga jual tersimpan ke database
-        'harga',      // Tetap pertahankan ini untuk kolom utama database kamu
+        'harga_beli',
+        'harga_jual',
         'stok',
         'image'
     ];
 
-    // Menambahkan custom attribute 'status' secara otomatis pada response JSON
+    // Menambahkan custom attribute 'status' pada response JSON secara otomatis
     protected $appends = ['status'];
 
     /**
+     * Relasi ke TransactionDetail agar data produk bisa diakses dari transaksi
+     */
+    public function details()
+    {
+        return $this->hasMany(TransactionDetail::class, 'product_id');
+    }
+
+    /**
      * Accessor untuk mendapatkan status produk berdasarkan jumlah stok.
-     * Otomatis dipanggil saat data dikonversi ke JSON di frontend.
      */
     public function getStatusAttribute()
     {
