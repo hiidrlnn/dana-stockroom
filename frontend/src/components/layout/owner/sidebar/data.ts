@@ -21,12 +21,6 @@ export const OWNER_MENU = [
   },
 
   {
-    title: "Manajemen User",
-    url: "/manajemen-user-owner",
-    icon: Users,
-  },
-
-  {
     title: "Pengaturan Akun",
     url: "/pengaturan-akun-owner",
     icon: Settings,

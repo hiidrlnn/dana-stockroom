@@ -45,6 +45,7 @@ const [isDetailOpen, setIsDetailOpen] =
   const handleDetail = async (
   id: number,
 ) => {
+
   try {
     const response =
       await fetch(
@@ -53,6 +54,8 @@ const [isDetailOpen, setIsDetailOpen] =
 
     const data =
       await response.json();
+
+      console.log(data);
 
     setSelectedTransaction(
       data,
@@ -472,148 +475,234 @@ const [isDetailOpen, setIsDetailOpen] =
           </div>
         </div>
         {isDetailOpen &&
-  selectedTransaction && (
-    <div
-      className="
-        fixed
-        inset-0
-        z-50
-        flex
-        items-center
-        justify-center
-        bg-black/60
-        p-4
-      ">
-      <div
-        className="
-          w-full
-          max-w-2xl
-          rounded-2xl
-          bg-[#0F172A]
-          p-6
-          text-white
-        ">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-bold">
-            Detail Transaksi
-          </h2>
-
-          <button
-            onClick={() =>
-              setIsDetailOpen(
-                false,
-              )
-            }
-            className="text-gray-400 hover:text-white">
-            ✕
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          <p>
-            <strong>
-              Invoice:
-            </strong>{" "}
-            {
-              selectedTransaction.invoice_number
-            }
-          </p>
-
-          <p>
-            <strong>
-              Customer:
-            </strong>{" "}
-            {
-              selectedTransaction.customer_name
-            }
-          </p>
-
-          <p>
-            <strong>
-              Status:
-            </strong>{" "}
-            {
-              selectedTransaction.status
-            }
-          </p>
-
-          <p>
-            <strong>
-              Total:
-            </strong>{" "}
-            {formatRupiah(
-              Number(
-                selectedTransaction.total,
-              ),
-            )}
-          </p>
-
-          <p>
-            <strong>
-              Tanggal:
-            </strong>{" "}
-            {new Date(
-              selectedTransaction.created_at,
-            ).toLocaleString(
-              "id-ID",
-            )}
-          </p>
-        </div>
-
-        <div className="mt-6">
-          <h3 className="mb-3 font-semibold">
-            Detail Item
-          </h3>
-
-          <div className="space-y-2">
-            {selectedTransaction.details?.map(
-              (
-                detail: any,
-                index: number,
-              ) => (
+          selectedTransaction && (
+            <div
+              className="
+                fixed
+                inset-0
+                z-50
+                flex
+                items-center
+                justify-center
+                bg-black/70
+                p-4
+              ">
+            <div
+              className="
+                w-full
+                max-w-5xl
+                max-h-[90vh]
+                overflow-y-auto
+                rounded-3xl
+                  border
+                  border-white/10
+                  bg-[#0F172A]
+                  shadow-2xl
+                ">
+                {/* HEADER */}
                 <div
-                  key={index}
                   className="
-                    rounded-lg
-                    border
+                    flex
+                    items-center
+                    justify-between
+                    border-b
                     border-white/10
-                    p-3
+                    px-8
+                    py-5
                   ">
-                  <p>
-                    Produk:
-                    {" "}
-                    {detail
-                      ?.product
-                      ?.nama ||
-                      detail?.jasa_name ||
-                      "-"}
-                  </p>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">
+                      Detail Transaksi
+                    </h2>
 
-                  <p>
-                    Qty:
-                    {" "}
-                    {
-                      detail.quantity
+                    <p className="mt-1 text-sm text-gray-400">
+                      Informasi lengkap transaksi
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setIsDetailOpen(false)
                     }
-                  </p>
-
-                  <p>
-                    Harga:
-                    {" "}
-                    {formatRupiah(
-                      Number(
-                        detail.price,
-                      ),
-                    )}
-                  </p>
+                    className="
+                      rounded-xl
+                      bg-white/5
+                      px-4
+                      py-2
+                      text-gray-400
+                      hover:bg-white/10
+                      hover:text-white
+                    ">
+                    ✕
+                  </button>
                 </div>
-              ),
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-)}
+
+                {/* CONTENT */}
+                <div className="p-8">
+                  {/* INFO */}
+                  <div className="grid gap-5 md:grid-cols-2">
+
+                    <div className="rounded-2xl border border-white/10 bg-[#1E293B] p-5">
+                      <p className="mb-2 text-sm text-gray-400">
+                        Invoice
+                      </p>
+
+                      <h3 className="text-lg font-bold text-white">
+                        {
+                          selectedTransaction.invoice_number
+                        }
+                      </h3>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-[#1E293B] p-5">
+                      <p className="mb-2 text-sm text-gray-400">
+                        Customer
+                      </p>
+
+                      <h3 className="text-lg font-bold text-white">
+                        {selectedTransaction.customer_name || "-"}
+                      </h3>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-[#1E293B] p-5">
+                      <p className="mb-2 text-sm text-gray-400">
+                        Metode Pembayaran
+                      </p>
+
+                      <h3 className="text-lg font-bold text-white capitalize">
+                        {
+                          selectedTransaction.payment_method
+                        }
+                      </h3>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-[#1E293B] p-5">
+                      <p className="mb-2 text-sm text-gray-400">
+                        Status
+                      </p>
+
+                      <span
+                        className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                          selectedTransaction.status ===
+                          "Selesai"
+                            ? "bg-green-500/20 text-green-400"
+                            : selectedTransaction.status ===
+                                "Pending"
+                              ? "bg-yellow-500/20 text-yellow-400"
+                              : "bg-red-500/20 text-red-400"
+                        }`}>
+                        {
+                          selectedTransaction.status
+                        }
+                      </span>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-[#1E293B] p-5">
+                      <p className="mb-2 text-sm text-gray-400">
+                        Total Pembayaran
+                      </p>
+
+                      <h3 className="text-2xl font-bold text-sky-400">
+                        {formatRupiah(
+                          Number(
+                            selectedTransaction.total
+                          )
+                        )}
+                      </h3>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-[#1E293B] p-5">
+                      <p className="mb-2 text-sm text-gray-400">
+                        Tanggal Transaksi
+                      </p>
+
+                      <h3 className="text-lg font-semibold text-white">
+                        {new Date(
+                          selectedTransaction.created_at
+                        ).toLocaleString(
+                          "id-ID"
+                        )}
+                      </h3>
+                    </div>
+                  </div>
+
+                  {/* DETAIL ITEM */}
+                  <div className="mt-8">
+                    <h3 className="mb-4 text-xl font-bold text-white">
+                      Detail Produk
+                    </h3>
+
+                    <div className="overflow-x-auto rounded-2xl border border-white/10">
+                      <table className="min-w-[700px] w-full">
+                        <thead className="bg-[#1E293B]">
+                          <tr>
+                            <th className="px-5 py-4 text-left text-sm text-gray-400">
+                              Produk
+                            </th>
+
+                            <th className="px-5 py-4 text-left text-sm text-gray-400">
+                              Qty
+                            </th>
+
+                            <th className="px-5 py-4 text-left text-sm text-gray-400">
+                              Harga
+                            </th>
+
+                            <th className="px-5 py-4 text-left text-sm text-gray-400">
+                              Subtotal
+                            </th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {selectedTransaction.items?.map(
+                            (
+                              item: any,
+                              index: number
+                            ) => (
+                              <tr
+                                key={index}
+                                className="border-t border-white/10">
+                                  
+                                <td className="px-5 py-4">
+                                <div>
+                                  <p className="font-medium text-white">
+                                    {item.nama}
+                                  </p>
+
+                                  <p className="mt-1 text-xs text-gray-400">
+                                    SKU: {item.sku}
+                                  </p>
+                                </div>
+                              </td>
+
+                                <td className="px-5 py-4 text-gray-300">
+                                  {item.qty}
+                                </td>
+
+                                <td className="px-5 py-4 text-gray-300">
+                                  {formatRupiah(
+                                    Number(item.harga)
+                                  )}
+                                </td>
+
+                                <td className="px-5 py-4 font-semibold text-sky-400">
+                                  {formatRupiah(
+                                    Number(item.qty) *
+                                    Number(item.harga)
+                                  )}
+                                </td>
+                              </tr>
+                            )
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+        )}
       </Card>
     </div>
     

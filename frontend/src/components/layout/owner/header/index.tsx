@@ -24,6 +24,13 @@ export function OwnerHeader({
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(false);
+  const handleLogout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  sessionStorage.clear();
+
+  window.location.href = "/";
+};
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -250,23 +257,26 @@ export function OwnerHeader({
                     label="Pengaturan Akun"
                   />
 
-                  <button
-                    className="
-                      mt-2
-                      flex
-                      w-full
-                      items-center
-                      gap-3
-                      rounded-xl
-                      px-4
-                      py-3
-                      text-red-500
-                      hover:bg-red-50
-                      dark:hover:bg-red-500/10
-                    ">
-                    <LogOut size={18} />
-                    Logout
-                  </button>
+                <button
+                  onClick={handleLogout}
+                  className="
+                    mt-2
+                    flex
+                    w-full
+                    items-center
+                    gap-3
+                    rounded-xl
+                    px-4
+                    py-3
+                    text-red-500
+                    transition
+                    hover:bg-red-50
+                    dark:hover:bg-red-500/10
+                  "
+                >
+                  <LogOut size={18} />
+                  Logout
+                </button>
                 </div>
               </div>
             )}

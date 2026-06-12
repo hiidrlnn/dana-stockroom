@@ -98,19 +98,15 @@ export function LoginForm() {
           {/* Form */}
           <SigninWithPassword role={role} />
 
-          <div
-            className={`mt-6 text-center text-sm ${
-              darkMode ? "text-gray-400" : "text-gray-600"
-            }`}>
-            <p>
-              Belum punya akun?{" "}
-              <Link
-                href="/register"
-                className="font-medium text-sky-500 hover:text-sky-400">
-                Daftar
-              </Link>
-            </p>
-          </div>
+         <div
+  className={`mt-6 text-center text-sm ${
+    darkMode ? "text-gray-400" : "text-gray-600"
+  }`}
+>
+  <p>
+    Hubungi administrator untuk mendapatkan akun.
+  </p>
+</div>
         </div>
       </div>
     </Suspense>

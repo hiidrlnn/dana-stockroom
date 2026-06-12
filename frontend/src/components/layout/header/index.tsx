@@ -25,7 +25,8 @@ export function Header() {
         border-stroke
         bg-white
         px-4
-        py-5
+        py-3
+        md:py-5
         shadow-1
         transition-colors
 
@@ -76,25 +77,26 @@ export function Header() {
         )}
 
         {/* TITLE */}
-        <div>
-          <h1 className="text-heading-5 text-dark mb-0.5 font-bold dark:text-white">
-            Dashboard
-          </h1>
+      <div>
+        <h1 className="text-xl font-bold text-dark dark:text-white md:text-heading-5">
+          Dashboard
+        </h1>
 
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            Dashboard Admin Dana
-            Stockroom
-          </p>
-        </div>
+        <p className="hidden text-sm font-medium text-gray-500 dark:text-gray-400 md:block">
+          Dashboard Admin Dana Stockroom
+        </p>
+      </div>
       </div>
 
       {/* RIGHT */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         <ThemeToggleSwitch />
 
-        <div className="shrink-0">
+      <div className="shrink-0">
+        <div className="hidden lg:block">
           <UserInfo />
         </div>
+      </div>
       </div>
     </header>
   );

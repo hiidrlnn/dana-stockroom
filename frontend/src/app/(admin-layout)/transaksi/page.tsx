@@ -60,8 +60,7 @@ const [detailData, setDetailData] =
         const mappedData =
           data.map((trx: any) => {
             const detail =
-              trx.details?.[0];
-
+            trx.items?.[0];
             return {
               id: trx.id,
 
@@ -78,8 +77,7 @@ const [detailData, setDetailData] =
                 "-",
 
               merk:
-                detail?.product?.merk ||
-                "-",
+                detail?.sku || "-",
 
               kategori:
                 detail?.product?.kategori ||
@@ -102,17 +100,16 @@ const [detailData, setDetailData] =
               status:
                 trx.status,
 
-              tanggal:
-                new Date(
-                  trx.created_at,
-                ).toLocaleDateString(
-                  "id-ID",
-                  {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  },
-                ),
+            tanggal:
+              new Date(
+                trx.created_at
+              ).toLocaleString("id-ID", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
             };
           });
 
@@ -224,7 +221,10 @@ const [detailData, setDetailData] =
     const data =
       await response.json();
 
+    console.log(data);
+
     setDetailData(data);
+    setShowDetail(true);
 
     setShowDetail(true);
 
@@ -253,6 +253,8 @@ const [detailData, setDetailData] =
 
         <button
           className="
+            w-full
+            md:w-auto
             rounded-xl
             bg-sky-500
             px-5
@@ -261,7 +263,8 @@ const [detailData, setDetailData] =
             text-white
             transition
             hover:bg-sky-600
-          ">
+          "
+        >
           + Tambah Transaksi
         </button>
       </div>
@@ -299,294 +302,626 @@ const [detailData, setDetailData] =
           />
         </div>
 
-        <div className="w-full overflow-x-auto overflow-y-hidden pb-2">
-          <div className="min-w-[1200px]">
-            <DataTable
-              headers={[
-                "Invoice",
-                "Customer",
-                "Produk",
-                "Merk",
-                "Kategori",
-                "Size",
-                "Total",
-                "Metode",
-                "Status",
-                "Tanggal",
-                "Action",
-              ]}>
-              {loading ? (
-                <tr>
-                  <td
-                    colSpan={11}
-                    className="py-10 text-center text-white">
-                    Loading...
-                  </td>
-                </tr>
-              ) : filteredTransactions.length ===
-                0 ? (
-                <tr>
-                  <td
-                    colSpan={11}
-                    className="py-10 text-center text-white">
-                    Belum ada transaksi
-                  </td>
-                </tr>
-              ) : (
-                filteredTransactions.map(
-                  (item) => (
-                    <tr
-                      key={item.id}
-                      className="border-b border-gray-200 dark:border-white/5">
-                      <td className="whitespace-nowrap py-5">
-                        <div>
-                          <p className="font-semibold text-gray-900 dark:text-white">
-                            {
-                              item.invoice
-                            }
-                          </p>
+{/* MOBILE + TABLET */}
+<div className="grid gap-4 xl:hidden">
+  {loading ? (
+    <Card>
+      <p className="text-center text-gray-500 dark:text-gray-400">
+        Loading...
+      </p>
+    </Card>
+  ) : filteredTransactions.length === 0 ? (
+    <Card>
+      <p className="text-center text-gray-500 dark:text-gray-400">
+        Belum ada transaksi
+      </p>
+    </Card>
+  ) : (
+    filteredTransactions.map((item) => (
+      <Card
+        key={item.id}
+        className="
+          border
+          border-gray-200
+          bg-white
+          shadow-sm
+          dark:border-white/10
+          dark:bg-[#0F172A]
+        "
+      >
+        <div className="space-y-4">
 
-                          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Dana
-                            Stockroom
-                          </p>
-                        </div>
-                      </td>
+          <div>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              {item.invoice}
+            </h3>
 
-                      <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
-                        {
-                          item.customer
-                        }
-                      </td>
-
-                      <td className="whitespace-nowrap py-5 font-medium text-gray-700 dark:text-gray-300">
-                        {item.produk}
-                      </td>
-
-                      <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
-                        {item.merk}
-                      </td>
-
-                      <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
-                        {
-                          item.kategori
-                        }
-                      </td>
-
-                      <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
-                        {item.size}
-                      </td>
-
-                      <td className="whitespace-nowrap py-5 font-semibold text-gray-700 dark:text-gray-300">
-                        {formatRupiah(
-                          item.total,
-                        )}
-                      </td>
-
-                      <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
-                        {
-                          item.metode
-                        }
-                      </td>
-
-                      <td className="whitespace-nowrap py-5">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            item.status ===
-                            "Selesai"
-                              ? "bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400"
-                              : item.status ===
-                                  "Pending"
-                                ? "bg-yellow-100 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400"
-                                : "bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
-                          }`}>
-                          {
-                            item.status
-                          }
-                        </span>
-                      </td>
-
-                      <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
-                        {
-                          item.tanggal
-                        }
-                      </td>
-
-                      <td className="whitespace-nowrap py-5">
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() =>
-                              handleDetail(item.id)
-                            }
-                            className="
-                              rounded-lg
-                              bg-sky-100
-                              px-4
-                              py-2
-                              text-sm
-                              font-medium
-                              text-sky-600
-                              transition
-                              hover:bg-sky-200
-
-                              dark:bg-sky-500/20
-                              dark:text-sky-400
-                              dark:hover:bg-sky-500/30
-                            ">
-                            Detail
-                          </button>
-                              <button
-                            onClick={() =>
-                              handleDeleteTransaction(
-                                item.id,
-                                item.invoice,
-                              )
-                            }
-                            className="
-                              rounded-lg
-                              bg-red-100
-                              px-4
-                              py-2
-                              text-sm
-                              font-medium
-                              text-red-600
-                              transition
-                              hover:bg-red-200
-
-                              dark:bg-red-500/20
-                              dark:text-red-400
-                              dark:hover:bg-red-500/30
-                            ">
-                            Hapus
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ),
-                )
-              )}
-            </DataTable>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Dana Stockroom
+            </p>
           </div>
+
+          <div className="space-y-3">
+
+            <div className="flex justify-between border-b border-gray-200 pb-2 dark:border-white/5">
+              <span className="text-gray-500 dark:text-gray-400">
+                Customer
+              </span>
+
+              <span className="font-medium text-gray-900 dark:text-white">
+                {item.customer}
+              </span>
+            </div>
+
+            <div className="flex justify-between border-b border-gray-200 pb-2 dark:border-white/5">
+              <span className="text-gray-500 dark:text-gray-400">
+                Produk
+              </span>
+
+              <span className="font-medium text-right text-gray-900 dark:text-white">
+                {item.produk}
+              </span>
+            </div>
+
+            <div className="flex justify-between border-b border-gray-200 pb-2 dark:border-white/5">
+              <span className="text-gray-500 dark:text-gray-400">
+                Merk
+              </span>
+
+              <span className="text-gray-900 dark:text-white">
+                {item.merk}
+              </span>
+            </div>
+
+            <div className="flex justify-between border-b border-gray-200 pb-2 dark:border-white/5">
+              <span className="text-gray-500 dark:text-gray-400">
+                Kategori
+              </span>
+
+              <span className="text-gray-900 dark:text-white">
+                {item.kategori}
+              </span>
+            </div>
+
+            <div className="flex justify-between border-b border-gray-200 pb-2 dark:border-white/5">
+              <span className="text-gray-500 dark:text-gray-400">
+                Size
+              </span>
+
+              <span className="text-gray-900 dark:text-white">
+                {item.size}
+              </span>
+            </div>
+
+            <div className="flex justify-between border-b border-gray-200 pb-2 dark:border-white/5">
+              <span className="text-gray-500 dark:text-gray-400">
+                Metode
+              </span>
+
+              <span className="text-gray-900 dark:text-white uppercase">
+                {item.metode}
+              </span>
+            </div>
+
+            <div className="flex justify-between border-b border-gray-200 pb-2 dark:border-white/5">
+              <span className="text-gray-500 dark:text-gray-400">
+                Total
+              </span>
+
+              <span className="font-bold text-green-600 dark:text-green-400">
+                {formatRupiah(item.total)}
+              </span>
+            </div>
+
+            <div className="flex justify-between">
+              <span className="text-gray-500 dark:text-gray-400">
+                Tanggal
+              </span>
+
+              <span className="text-right text-gray-700 dark:text-gray-300">
+                {item.tanggal}
+              </span>
+            </div>
+
+          </div>
+
+          <div className="flex flex-col gap-3">
+
+            <span
+              className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
+                item.status === "Selesai"
+                  ? "bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400"
+                  : item.status === "Pending"
+                  ? "bg-yellow-100 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400"
+                  : "bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
+              }`}
+            >
+              {item.status}
+            </span>
+
+            <div className="grid grid-cols-2 gap-3">
+
+              <button
+                onClick={() => handleDetail(item.id)}
+                className="
+                  rounded-xl
+                  bg-sky-500
+                  py-2.5
+                  font-medium
+                  text-white
+                "
+              >
+                Detail
+              </button>
+
+              <button
+                onClick={() =>
+                  handleDeleteTransaction(
+                    item.id,
+                    item.invoice
+                  )
+                }
+                className="
+                  rounded-xl
+                  bg-red-500
+                  py-2.5
+                  font-medium
+                  text-white
+                "
+              >
+                Hapus
+              </button>
+
+            </div>
+
+          </div>
+
         </div>
       </Card>
-      {showDetail && detailData && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div className="w-full max-w-3xl rounded-2xl bg-white p-6 dark:bg-[#0F172A]">
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-          Detail Transaksi
-        </h2>
+    ))
+  )}
+</div>
 
-        <button
-          onClick={() =>
-            setShowDetail(false)
-          }
-          className="text-2xl text-gray-500">
-          ×
-        </button>
-      </div>
+{/* DESKTOP */}
+<div className="hidden xl:block">
+  <div className="w-full overflow-x-auto overflow-y-hidden pb-2">
+    <div className="min-w-[1200px]">
+      <DataTable
+        headers={[
+          "Invoice",
+          "Customer",
+          "Produk",
+          "Merk",
+          "Kategori",
+          "Size",
+          "Total",
+          "Metode",
+          "Status",
+          "Tanggal",
+          "Action",
+        ]}
+      >
+        {loading ? (
+          <tr>
+            <td
+              colSpan={11}
+              className="py-10 text-center text-gray-500 dark:text-gray-400"
+            >
+              Loading...
+            </td>
+          </tr>
+        ) : filteredTransactions.length === 0 ? (
+          <tr>
+            <td
+              colSpan={11}
+              className="py-10 text-center text-gray-500 dark:text-gray-400"
+            >
+              Belum ada transaksi
+            </td>
+          </tr>
+        ) : (
+          filteredTransactions.map((item) => (
+            <tr
+              key={item.id}
+              className="border-b border-gray-200 dark:border-white/5"
+            >
+              <td className="whitespace-nowrap py-5">
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-white">
+                    {item.invoice}
+                  </p>
 
-      <div className="mb-6 grid gap-2">
-        <p>
-          <strong>Invoice:</strong>{" "}
-          {detailData.invoice_number}
-        </p>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Dana Stockroom
+                  </p>
+                </div>
+              </td>
 
-        <p>
-          <strong>Customer:</strong>{" "}
-          {detailData.customer_name}
-        </p>
+              <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
+                {item.customer}
+              </td>
 
-        <p>
-          <strong>Status:</strong>{" "}
-          {detailData.status}
-        </p>
+              <td className="py-5 text-gray-700 dark:text-gray-300">
+                {item.produk}
+              </td>
 
-        <p>
-          <strong>Total:</strong>{" "}
-          {formatRupiah(
-            Number(detailData.total),
-          )}
-        </p>
-      </div>
+              <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
+                {item.merk}
+              </td>
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-200 dark:border-white/10">
-              <th className="py-3 text-left">
-                Produk / Jasa
-              </th>
+              <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
+                {item.kategori}
+              </td>
 
-              <th className="py-3 text-left">
-                Qty
-              </th>
+              <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
+                {item.size}
+              </td>
 
-              <th className="py-3 text-left">
-                Harga
-              </th>
+              <td className="whitespace-nowrap py-5 font-semibold text-gray-700 dark:text-gray-300">
+                {formatRupiah(item.total)}
+              </td>
 
-              <th className="py-3 text-left">
-                Subtotal
-              </th>
+              <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300 uppercase">
+                {item.metode}
+              </td>
+
+              <td className="whitespace-nowrap py-5">
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    item.status === "Selesai"
+                      ? "bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400"
+                      : item.status === "Pending"
+                      ? "bg-yellow-100 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400"
+                      : "bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
+                  }`}
+                >
+                  {item.status}
+                </span>
+              </td>
+
+              <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
+                {item.tanggal}
+              </td>
+
+              <td className="whitespace-nowrap py-5">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleDetail(item.id)}
+                    className="
+                      rounded-lg
+                      bg-sky-100
+                      px-4
+                      py-2
+                      text-sm
+                      font-medium
+                      text-sky-600
+                      hover:bg-sky-200
+                      dark:bg-sky-500/20
+                      dark:text-sky-400
+                    "
+                  >
+                    Detail
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      handleDeleteTransaction(
+                        item.id,
+                        item.invoice
+                      )
+                    }
+                    className="
+                      rounded-lg
+                      bg-red-100
+                      px-4
+                      py-2
+                      text-sm
+                      font-medium
+                      text-red-600
+                      hover:bg-red-200
+                      dark:bg-red-500/20
+                      dark:text-red-400
+                    "
+                  >
+                    Hapus
+                  </button>
+                </div>
+              </td>
             </tr>
-          </thead>
+          ))
+        )}
+      </DataTable>
+    </div>
+  </div>
+</div>
+      </Card>
+      {showDetail && detailData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div
+            className="
+              w-full
+              max-w-5xl
+              max-h-[90vh]
+              overflow-y-auto
+              rounded-3xl
+              bg-white
+              p-4
+              md:p-6
+              shadow-2xl
+              dark:bg-[#0F172A]
+            "
+          >
+            
+            <div className="mb-6 flex items-center justify-between border-b border-gray-200 pb-4 dark:border-white/10">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                Detail Transaksi
+              </h2>
 
-          <tbody>
-            {detailData.details?.map(
-              (detail: any) => (
-                <tr
-                  key={detail.id}
-                  className="border-b border-gray-200 dark:border-white/5">
-                  <td className="py-3">
-                    {detail.product?.nama ||
-                      detail.jasa_name}
-                  </td>
+              <button
+                onClick={() => setShowDetail(false)}
+                className="rounded-xl px-3 py-1 text-2xl text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10"
+              >
+                ×
+              </button>
+            </div>
 
-                  <td className="py-3">
-                    {detail.quantity}
-                  </td>
+            {/* INFO TRANSAKSI */}
+            <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+              
+              <div className="rounded-2xl border border-gray-200 p-4 dark:border-white/10">
+                <p className="mb-3 text-sm font-semibold text-gray-500">
+                  Informasi Transaksi
+                </p>
 
-                  <td className="py-3">
-                    {formatRupiah(
-                      Number(
-                        detail.price,
-                      ),
-                    )}
-                  </td>
+                <div className="space-y-3">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
+                    <span className="text-gray-500">Invoice</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      {detailData.invoice_number}
+                    </span>
+                  </div>
 
-                  <td className="py-3">
-                    {formatRupiah(
-                      Number(
-                        detail.price,
-                      ) *
-                        Number(
-                          detail.quantity,
-                        ),
-                    )}
-                  </td>
-                </tr>
-              ),
-            )}
-          </tbody>
-        </table>
+                  <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
+                    <span className="text-gray-500">Customer</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      {detailData.customer_name || "Pelanggan Umum"}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
+                    <span className="text-gray-500">Status</span>
+
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        detailData.status === "Selesai"
+                          ? "bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400"
+                          : detailData.status === "Pending"
+                          ? "bg-yellow-100 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400"
+                          : "bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
+                      }`}
+                    >
+                      {detailData.status}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
+                    <span className="text-gray-500">Metode Bayar</span>
+                    <span className="font-semibold capitalize text-slate-900 dark:text-white">
+                      {detailData.payment_method || "-"}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
+                    <span className="text-gray-500">Tanggal & Waktu</span>
+
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      {new Date(
+                        detailData.created_at
+                      ).toLocaleString("id-ID", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                      })}{" "}
+                      WIB
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* TOTAL */}
+              <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 dark:border-sky-500/20 dark:bg-sky-500/10">
+                <p className="mb-3 text-sm font-semibold text-sky-600">
+                  Ringkasan Pembayaran
+                </p>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span>Total Transaksi</span>
+
+                    <span className="text-lg sm:text-2xl font-bold text-sky-600">
+                      {formatRupiah(
+                        Number(detailData.total)
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>Jumlah Item</span>
+
+                    <span className="font-semibold">
+                      {detailData.items?.length || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+{/* DETAIL ITEM */}
+<div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10">
+
+  {/* DESKTOP TABLE */}
+  <div className="hidden md:block overflow-x-auto">
+    <table className="w-full">
+      <thead>
+        <tr className="bg-gray-50 dark:bg-white/5">
+          <th className="px-4 py-4 text-left">
+            Produk / Jasa
+          </th>
+
+          <th className="px-4 py-4 text-center">
+            Qty
+          </th>
+
+          <th className="px-4 py-4 text-right">
+            Harga
+          </th>
+
+          <th className="px-4 py-4 text-right">
+            Subtotal
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {detailData.items?.length > 0 ? (
+          detailData.items.map(
+            (
+              detail: any,
+              index: number,
+            ) => (
+              <tr
+                key={index}
+                className="border-t border-gray-200 dark:border-white/10"
+              >
+                <td className="px-4 py-4">
+                  <div>
+                    <p className="font-semibold text-slate-900 dark:text-white">
+                      {detail.nama}
+                    </p>
+
+                    <p className="text-xs text-gray-500">
+                      {detail.sku || "-"}
+                    </p>
+                  </div>
+                </td>
+
+                <td className="px-4 py-4 text-center">
+                  {detail.qty}
+                </td>
+
+                <td className="px-4 py-4 text-right">
+                  {formatRupiah(
+                    Number(detail.harga),
+                  )}
+                </td>
+
+                <td className="px-4 py-4 text-right font-semibold">
+                  {formatRupiah(
+                    Number(detail.harga) *
+                      Number(detail.qty),
+                  )}
+                </td>
+              </tr>
+            ),
+          )
+        ) : (
+          <tr>
+            <td
+              colSpan={4}
+              className="py-6 text-center text-gray-500"
+            >
+              Tidak ada detail transaksi
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+
+  {/* MOBILE CARD */}
+  <div className="space-y-3 p-4 md:hidden">
+    {detailData.items?.length > 0 ? (
+      detailData.items.map(
+        (
+          detail: any,
+          index: number,
+        ) => (
+          <div
+            key={index}
+            className="
+              rounded-xl
+              border
+              border-gray-200
+              p-4
+              dark:border-white/10
+            "
+          >
+            <div className="mb-3">
+              <p className="font-semibold text-slate-900 dark:text-white">
+                {detail.nama}
+              </p>
+
+              <p className="text-xs text-gray-500">
+                {detail.sku || "-"}
+              </p>
+            </div>
+
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Qty</span>
+                <span>{detail.qty}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Harga</span>
+                <span>
+                  {formatRupiah(
+                    Number(detail.harga),
+                  )}
+                </span>
+              </div>
+
+              <div className="flex justify-between font-semibold">
+                <span>Subtotal</span>
+                <span>
+                  {formatRupiah(
+                    Number(detail.harga) *
+                      Number(detail.qty),
+                  )}
+                </span>
+              </div>
+            </div>
+          </div>
+        ),
+      )
+    ) : (
+      <div className="py-6 text-center text-gray-500">
+        Tidak ada detail transaksi
       </div>
+    )}
+  </div>
+</div>
 
-      <div className="mt-6 flex justify-end">
-        <button
-          onClick={() =>
-            setShowDetail(false)
-          }
-          className="
-            rounded-xl
-            bg-sky-500
-            px-5
-            py-2
-            font-semibold
-            text-white
-          ">
-          Tutup
-            </button>
+            {/* FOOTER */}
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setShowDetail(false)}
+                className="
+                  rounded-xl
+                  bg-sky-500
+                  px-6
+                  py-3
+                  font-semibold
+                  text-white
+                  transition
+                  hover:bg-sky-600
+                "
+              >
+                Tutup
+              </button>
             </div>
           </div>
         </div>

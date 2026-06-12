@@ -7,6 +7,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\TransactionController;
 use App\Http\Controllers\API\DashboardController;
+use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\API\RolePermissionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,7 +16,6 @@ use App\Http\Controllers\API\DashboardController;
 |--------------------------------------------------------------------------
 */
 
-Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 /*
@@ -50,6 +51,25 @@ Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);
 
 /*
 |--------------------------------------------------------------------------
+| USER
+|--------------------------------------------------------------------------
+*/
+Route::get('/users', [UserController::class, 'index']);
+Route::post('/users', [UserController::class, 'store']);
+Route::get('/users/{id}', [UserController::class, 'show']);
+Route::put('/users/{id}', [UserController::class, 'update']);
+Route::delete('/users/{id}', [UserController::class, 'destroy']);
+
+/*
+|--------------------------------------------------------------------------
+| LAPORAN
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/reports/sales',[TransactionController::class, 'salesReport']);
+
+/*
+|--------------------------------------------------------------------------
 | PROTECTED ROUTES
 |--------------------------------------------------------------------------
 */
@@ -71,4 +91,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/change-password', [AuthController::class, 'changePassword']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
+    
 });

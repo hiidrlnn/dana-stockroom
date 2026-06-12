@@ -155,4 +155,55 @@ class TransactionController extends Controller
             return response()->json(['message' => 'Gagal menghapus transaksi', 'error' => $e->getMessage()], 500);
         }
     }
+    public function salesReport()
+{
+    $transactions = Transaction::with(['details.product'])
+        ->latest()
+        ->get();
+
+    return response()->json([
+        'summary' => [
+            'pendapatan' => (int) $transactions
+                ->where('status', 'Selesai')
+                ->sum('total'),
+
+            'transaksi' => $transactions->count(),
+
+            'pending' => $transactions
+                ->where('status', 'Pending')
+                ->count(),
+
+            'dibatalkan' => $transactions
+                ->where('status', 'Dibatalkan')
+                ->count(),
+        ],
+
+        'reports' => $transactions->map(function ($transaction) {
+            return [
+                'id' => $transaction->id,
+                'invoice_number' => $transaction->invoice_number,
+                'customer_name' => $transaction->customer_name,
+                'total' => (int) $transaction->total,
+                'status' => $transaction->status,
+                'payment_method' => $transaction->payment_method,
+                'created_at' => $transaction->created_at,
+
+                'items' => $transaction->details->map(function ($detail) {
+                    return [
+                        'sku' => $detail->product
+                            ? $detail->product->sku
+                            : '-',
+
+                        'nama' => $detail->product
+                            ? $detail->product->nama
+                            : $detail->jasa_name,
+
+                        'qty' => (int) $detail->quantity,
+                        'harga' => (int) $detail->price,
+                    ];
+                }),
+            ];
+        }),
+    ]);
+}
 }

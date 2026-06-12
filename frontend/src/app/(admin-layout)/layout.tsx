@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Header } from "@/components/layout/header";
@@ -9,26 +9,50 @@ import { SidebarProvider } from "@/components/layout/sidebar/sidebar-context";
 
 import type { PropsWithChildren } from "react";
 
-export default function WithLayout({
-  children,
-}: PropsWithChildren) {
+export default function WithLayout({ children }: PropsWithChildren) {
   const router = useRouter();
 
-  useEffect(() => {
-    const token =
-      localStorage.getItem("token");
+  const [authorized, setAuthorized] = useState(false);
 
-    if (
-      !token ||
-      token === "null" ||
-      token === "undefined"
-    ) {
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    const user = localStorage.getItem("user");
+
+    // Belum login
+    if (!token || token === "null" || token === "undefined") {
       localStorage.removeItem("token");
+
       localStorage.removeItem("user");
 
       router.replace("/login");
+
+      return;
     }
+
+    // Tidak ada data user
+    if (!user) {
+      router.replace("/login");
+
+      return;
+    }
+
+    const userData = JSON.parse(user);
+
+    // Bukan Admin
+    if (userData.role !== "Admin") {
+      router.replace("/login");
+
+      return;
+    }
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAuthorized(true);
   }, [router]);
+
+  if (!authorized) {
+    return null;
+  }
 
   return (
     <SidebarProvider>

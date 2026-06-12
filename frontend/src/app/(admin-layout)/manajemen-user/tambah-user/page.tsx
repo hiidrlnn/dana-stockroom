@@ -1,33 +1,82 @@
 "use client";
 
 import { useState } from "react";
-
 import Card from "@/components/ui/card";
 
+const API_URL =
+  "http://127.0.0.1:8000/api/users";
+
 export default function TambahUserPage() {
-  const [form, setForm] = useState({
-    nama: "",
-    email: "",
-    password: "",
-    role: "Kasir",
-    status: "Aktif",
-  });
+  const [loading, setLoading] =
+    useState(false);
 
-  const handleSubmit = () => {
-    if (!form.nama || !form.email || !form.password) {
-      alert("Semua field wajib diisi");
-      return;
-    }
-
-    alert("User berhasil ditambahkan");
-
-    setForm({
+  const [form, setForm] =
+    useState({
       nama: "",
       email: "",
       password: "",
       role: "Kasir",
       status: "Aktif",
     });
+
+  const handleSubmit = async () => {
+    if (
+      !form.nama ||
+      !form.email ||
+      !form.password
+    ) {
+      alert(
+        "Semua field wajib diisi"
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response =
+        await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify(
+            form
+          ),
+        });
+
+      const result =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.message ||
+            "Gagal menambahkan user"
+        );
+      }
+
+      alert(
+        "User berhasil ditambahkan"
+      );
+
+      setForm({
+        nama: "",
+        email: "",
+        password: "",
+        role: "Kasir",
+        status: "Aktif",
+      });
+    } catch (error: any) {
+      console.error(error);
+
+      alert(
+        error.message ||
+          "Terjadi kesalahan"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -39,13 +88,15 @@ export default function TambahUserPage() {
         </h1>
 
         <p className="mt-2 text-gray-500 dark:text-gray-400">
-          Tambahkan user baru ke sistem Dana Stockroom
+          Tambahkan user baru ke sistem Dana
+          Stockroom
         </p>
       </div>
 
       {/* CARD */}
       <Card className="max-w-3xl border border-gray-200 bg-white shadow-sm dark:border-white/10 dark:bg-[#0F172A]">
         <div className="space-y-6">
+
           {/* NAMA */}
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -71,15 +122,12 @@ export default function TambahUserPage() {
                 px-4
                 py-3
                 text-gray-900
-                placeholder:text-gray-500
                 outline-none
-                transition
                 focus:border-sky-500
 
                 dark:border-white/10
                 dark:bg-[#1E293B]
                 dark:text-white
-                dark:placeholder:text-gray-400
               "
             />
           </div>
@@ -109,15 +157,12 @@ export default function TambahUserPage() {
                 px-4
                 py-3
                 text-gray-900
-                placeholder:text-gray-500
                 outline-none
-                transition
                 focus:border-sky-500
 
                 dark:border-white/10
                 dark:bg-[#1E293B]
                 dark:text-white
-                dark:placeholder:text-gray-400
               "
             />
           </div>
@@ -135,7 +180,8 @@ export default function TambahUserPage() {
               onChange={(e) =>
                 setForm({
                   ...form,
-                  password: e.target.value,
+                  password:
+                    e.target.value,
                 })
               }
               className="
@@ -147,15 +193,12 @@ export default function TambahUserPage() {
                 px-4
                 py-3
                 text-gray-900
-                placeholder:text-gray-500
                 outline-none
-                transition
                 focus:border-sky-500
 
                 dark:border-white/10
                 dark:bg-[#1E293B]
                 dark:text-white
-                dark:placeholder:text-gray-400
               "
             />
           </div>
@@ -183,17 +226,23 @@ export default function TambahUserPage() {
                 px-4
                 py-3
                 text-gray-900
-                outline-none
-                transition
-                focus:border-sky-500
 
                 dark:border-white/10
                 dark:bg-[#1E293B]
                 dark:text-white
-              ">
-              <option>Owner</option>
-              <option>Admin</option>
-              <option>Kasir</option>
+              "
+            >
+              <option value="Owner">
+                Owner
+              </option>
+
+              <option value="Admin">
+                Admin
+              </option>
+
+              <option value="Kasir">
+                Kasir
+              </option>
             </select>
           </div>
 
@@ -208,7 +257,8 @@ export default function TambahUserPage() {
               onChange={(e) =>
                 setForm({
                   ...form,
-                  status: e.target.value,
+                  status:
+                    e.target.value,
                 })
               }
               className="
@@ -220,16 +270,19 @@ export default function TambahUserPage() {
                 px-4
                 py-3
                 text-gray-900
-                outline-none
-                transition
-                focus:border-sky-500
 
                 dark:border-white/10
                 dark:bg-[#1E293B]
                 dark:text-white
-              ">
-              <option>Aktif</option>
-              <option>Nonaktif</option>
+              "
+            >
+              <option value="Aktif">
+                Aktif
+              </option>
+
+              <option value="Nonaktif">
+                Nonaktif
+              </option>
             </select>
           </div>
 
@@ -237,6 +290,7 @@ export default function TambahUserPage() {
           <div className="flex justify-end">
             <button
               onClick={handleSubmit}
+              disabled={loading}
               className="
                 rounded-xl
                 bg-sky-500
@@ -246,10 +300,16 @@ export default function TambahUserPage() {
                 text-white
                 transition
                 hover:bg-sky-600
-              ">
-              Simpan User
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
+            >
+              {loading
+                ? "Menyimpan..."
+                : "Simpan User"}
             </button>
           </div>
+
         </div>
       </Card>
     </div>

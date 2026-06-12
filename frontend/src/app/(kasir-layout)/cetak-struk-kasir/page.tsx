@@ -197,8 +197,8 @@ const downloadPDF = () => {
     "normal",
   );
 
-  selectedTransaction.details.forEach(
-    (detail: any) => {
+(selectedTransaction.details || []).forEach(
+  (detail: any) => {
       y += 10;
 
       const nama =
@@ -427,11 +427,8 @@ const downloadPDF = () => {
                   Detail Item
                 </div>
 
-                {selectedTransaction.details.map(
-                  (
-                    detail: any,
-                    index: number,
-                  ) => (
+                {(selectedTransaction.details || []).map(
+  (detail: any, index: number) => (
                     <div
                       key={index}
                       className="flex justify-between text-sm text-gray-700 dark:text-gray-300">

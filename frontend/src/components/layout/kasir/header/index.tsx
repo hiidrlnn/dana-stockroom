@@ -1,49 +1,36 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 
 import {
-  ChevronDown,
-  Lock,
-  LogOut,
   Menu,
   Moon,
-  Settings,
   Sun,
+  ChevronDown,
   User,
+  LogOut,
+  Settings,
 } from "lucide-react";
 
 type Props = {
   onMenuClick: () => void;
 };
 
-type UserData = {
-  id?: number;
-  nama: string;
-  email: string;
-  role: string;
-  status?: string;
-};
-
 export function KasirHeader({ onMenuClick }: Props) {
-  const router = useRouter();
-
   const { theme, setTheme } = useTheme();
 
   const [mounted, setMounted] = useState(false);
 
-  const [openDropdown, setOpenDropdown] = useState(false);
-
-  const [user, setUser] = useState<UserData>({
-    nama: "Kasir",
-    email: "kasir@danastockroom.com",
-    role: "Kasir",
-  });
+  const [openProfile, setOpenProfile] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const [user, setUser] = useState({
+    nama: "Kasir",
+    role: "Kasir",
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -57,11 +44,8 @@ export function KasirHeader({ onMenuClick }: Props) {
         const parsed = JSON.parse(userData);
 
         setUser({
-          id: parsed.id,
           nama: parsed.nama || "Kasir",
-          email: parsed.email || "kasir@danastockroom.com",
           role: parsed.role || "Kasir",
-          status: parsed.status,
         });
       } catch (error) {
         console.error(error);
@@ -75,67 +59,46 @@ export function KasirHeader({ onMenuClick }: Props) {
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
       ) {
-        setOpenDropdown(false);
+        setOpenProfile(false);
       }
     }
 
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      const token = localStorage.getItem("token");
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
 
-      if (token) {
-        await fetch(
-          "http://127.0.0.1:8000/api/logout",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          }
-        );
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-
-      router.push("/login");
-    }
+    window.location.href = "/login";
   };
 
   return (
     <header
       className="
-        sticky
-        top-0
-        z-30
-        border-b
-        border-gray-200
-        bg-white
-        px-6
-        py-4
-        transition-colors
+      sticky
+      top-0
+      z-[60]
 
-        dark:border-white/10
-        dark:bg-[#0F172A]
-      "
+      border-b
+      border-gray-200
+
+      bg-white/95
+      backdrop-blur-md
+
+      dark:border-white/10
+      dark:bg-[#0F172A]/95
+
+      px-4
+      py-4
+      sm:px-6
+    "
     >
-      <div className="flex items-center justify-between gap-5">
+      <div className="flex items-center justify-between">
         {/* LEFT */}
         <div className="flex items-center gap-4">
           <button
@@ -148,24 +111,44 @@ export function KasirHeader({ onMenuClick }: Props) {
               justify-center
               rounded-xl
               bg-gray-100
-              text-slate-900
-              transition
-              hover:bg-gray-200
 
               dark:bg-white/5
-              dark:text-white
-              dark:hover:bg-white/10
 
               xl:hidden
             "
           >
             <Menu size={20} />
           </button>
+
+          <div>
+            <h1
+              className="
+                text-lg
+                font-bold
+                text-slate-900
+
+                dark:text-white
+              "
+            >
+              Dashboard Kasir
+            </h1>
+
+            <p
+              className="
+                hidden
+                text-xs
+                text-gray-500
+
+                sm:block
+              "
+            >
+              Dana Stockroom
+            </p>
+          </div>
         </div>
 
         {/* RIGHT */}
         <div className="flex items-center gap-4">
-          {/* THEME */}
           {mounted && (
             <div
               className="
@@ -176,7 +159,7 @@ export function KasirHeader({ onMenuClick }: Props) {
                 border
                 border-gray-200
                 bg-gray-100
-                p-2
+                p-1.5
 
                 dark:border-white/10
                 dark:bg-[#081028]
@@ -186,16 +169,16 @@ export function KasirHeader({ onMenuClick }: Props) {
                 onClick={() => setTheme("light")}
                 className={`
                   flex
-                  h-10
-                  w-10
+                  h-9
+                  w-9
                   items-center
                   justify-center
                   rounded-full
-                  transition
+
                   ${
                     theme === "light"
                       ? "bg-sky-500 text-white"
-                      : "text-gray-500 dark:text-gray-400"
+                      : "text-gray-500"
                   }
                 `}
               >
@@ -206,16 +189,14 @@ export function KasirHeader({ onMenuClick }: Props) {
                 onClick={() => setTheme("dark")}
                 className={`
                   flex
-                  h-10
-                  w-10
+                  h-9
+                  w-9
                   items-center
                   justify-center
                   rounded-full
-                  transition
+
                   ${
-                    theme === "dark"
-                      ? "bg-sky-500 text-white"
-                      : "text-gray-500 dark:text-gray-400"
+                    theme === "dark" ? "bg-sky-500 text-white" : "text-gray-500"
                   }
                 `}
               >
@@ -224,137 +205,290 @@ export function KasirHeader({ onMenuClick }: Props) {
             </div>
           )}
 
-          {/* PROFILE */}
+          {/* PROFILE DESKTOP */}
           <div
-            className="relative"
             ref={dropdownRef}
+            className="
+    relative
+    hidden
+    xl:block
+  "
           >
+            {/* BUTTON PROFILE */}
             <button
-              onClick={() =>
-                setOpenDropdown(!openDropdown)
-              }
+              onClick={() => setOpenProfile(!openProfile)}
               className="
-                flex
-                items-center
-                gap-3
-                rounded-2xl
-                border
-                border-gray-200
-                bg-white
-                px-4
-                py-2
+      flex
+      items-center
+      gap-4
 
-                dark:border-white/10
-                dark:bg-[#0B1120]
-              "
+      rounded-2xl
+      border
+      border-gray-200
+
+      bg-white
+
+      px-4
+      py-3
+
+      transition
+
+      hover:border-sky-500/40
+
+      dark:border-white/10
+      dark:bg-[#081028]
+    "
             >
-              <div
-                className="
-                  flex
-                  h-11
-                  w-11
-                  items-center
-                  justify-center
-                  rounded-full
-                  bg-sky-500
-                  font-bold
-                  text-white
-                "
-              >
-                {user.nama.charAt(0).toUpperCase()}
+              <div className="relative">
+                <div
+                  className="
+          flex
+          h-12
+          w-12
+          items-center
+          justify-center
+
+          rounded-full
+          bg-sky-500
+
+          text-lg
+          font-bold
+          text-white
+        "
+                >
+                  {user.nama.charAt(0).toUpperCase()}
+                </div>
+
+                <span
+                  className="
+          absolute
+          bottom-0
+          right-0
+
+          h-3
+          w-3
+
+          rounded-full
+          border-2
+          border-white
+
+          bg-green-500
+
+          dark:border-[#081028]
+        "
+                />
               </div>
 
-              <div className="hidden text-left md:block">
-                <h4 className="font-semibold text-slate-900 dark:text-white">
+              <div className="text-left">
+                <h4
+                  className="
+          font-semibold
+          text-slate-900
+
+          dark:text-white
+        "
+                >
                   {user.nama}
                 </h4>
 
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p
+                  className="
+          text-xs
+          text-gray-500
+
+          dark:text-gray-400
+        "
+                >
                   {user.role}
                 </p>
               </div>
 
               <ChevronDown
                 size={18}
-                className={`transition ${
-                  openDropdown ? "rotate-180" : ""
-                }`}
+                className={`
+        transition
+        ${openProfile ? "rotate-180" : ""}
+      `}
               />
             </button>
 
-            {openDropdown && (
+            {/* DROPDOWN */}
+            {openProfile && (
               <div
                 className="
-                  absolute
-                  right-0
-                  top-[78px]
-                  z-50
-                  w-[290px]
-                  overflow-hidden
-                  rounded-3xl
-                  border
-                  border-gray-200
-                  bg-white
-                  shadow-2xl
+                absolute
+                right-0
+                top-[78px]
 
-                  dark:border-white/10
-                  dark:bg-[#0F172A]
-                "
+                z-50
+                w-[280px]
+
+                overflow-hidden
+
+                rounded-3xl
+
+                border
+                border-gray-200
+
+                bg-white
+
+                shadow-2xl
+
+                dark:border-white/10
+                dark:bg-[#0F172A]
+              "
               >
-                <div className="border-b border-gray-200 p-5 dark:border-white/10">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-sky-500 text-xl font-bold text-white">
-                      {user.nama.charAt(0).toUpperCase()}
+                {/* HEADER */}
+                <div
+                  className="
+          border-b
+          border-gray-200
+
+          p-6
+
+          dark:border-white/10
+        "
+                >
+                  <div className="flex gap-4">
+                    <div className="relative">
+                      <div
+                        className="
+                flex
+                h-14
+                w-14
+                items-center
+                justify-center
+
+                rounded-full
+                bg-sky-500
+
+                text-xl
+                font-bold
+                text-white
+              "
+                      >
+                        {user.nama.charAt(0).toUpperCase()}
+                      </div>
+
+                      <span
+                        className="
+                absolute
+                bottom-1
+                right-1
+
+                h-3
+                w-3
+
+                rounded-full
+
+                bg-green-500
+              "
+                      />
                     </div>
 
                     <div>
-                      <h3 className="text-lg font-semibold dark:text-white">
+                      <h3
+                        className="
+                text-lg
+                font-bold
+
+                text-slate-900
+
+                dark:text-white
+              "
+                      >
                         {user.nama}
                       </h3>
 
-                      <p className="text-sm text-gray-500">
-                        {user.email}
+                      <p
+                        className="
+                text-lg
+                text-gray-500
+              "
+                      >
+                        {user.role}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-3">
-                  <DropdownItem
+                {/* MENU */}
+                <div className="p-4">
+                  <Link
                     href="/view-profile-kasir"
-                    icon={<User size={18} />}
-                    label="View Profile"
-                  />
+                    className="
+            flex
+            items-center
+            gap-4
 
-                  <DropdownItem
-                    href="/pengaturan-akun-kasir"
-                    icon={<Settings size={18} />}
-                    label="Pengaturan Akun"
-                  />
+            rounded-2xl
 
-                  <DropdownItem
+            px-4
+            py-3
+            text-base
+
+            transition
+
+            hover:bg-gray-100
+
+            dark:hover:bg-white/5
+          "
+                  >
+                    <User size={18} />
+                    View Profile
+                  </Link>
+
+                  <Link
                     href="/pengaturan-akun-kasir"
-                    icon={<Lock size={18} />}
-                    label="Ganti Password"
-                  />
+                    className="
+            flex
+            items-center
+            gap-4
+
+            rounded-2xl
+
+            px-4
+            py-4
+
+            text-lg
+
+            transition
+
+            hover:bg-gray-100
+
+            dark:hover:bg-white/5
+          "
+                  >
+                    <Settings size={18} />
+                    Pengaturan Akun
+                  </Link>
 
                   <button
                     onClick={handleLogout}
                     className="
-                      mt-2
-                      flex
-                      w-full
-                      items-center
-                      gap-3
-                      rounded-xl
-                      px-4
-                      py-3
-                      text-red-500
-                      transition
-                      hover:bg-red-50
-                    "
+            mt-2
+
+            flex
+            w-full
+            items-center
+            gap-4
+
+            rounded-2xl
+
+            px-4
+            py-4
+
+            text-lg
+            text-red-500
+
+            transition
+
+            hover:bg-red-50
+
+            dark:hover:bg-red-500/10
+          "
                   >
-                    <LogOut size={18} />
+                    <LogOut size={22} />
                     Logout
                   </button>
                 </div>
@@ -364,35 +498,5 @@ export function KasirHeader({ onMenuClick }: Props) {
         </div>
       </div>
     </header>
-  );
-}
-
-function DropdownItem({
-  href,
-  icon,
-  label,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="
-        flex
-        items-center
-        gap-3
-        rounded-xl
-        px-4
-        py-3
-        transition
-        hover:bg-gray-100
-        dark:hover:bg-white/5
-      "
-    >
-      {icon}
-      {label}
-    </Link>
   );
 }

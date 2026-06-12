@@ -70,11 +70,6 @@ export const NAV_DATA = [
             title: "Tambah User",
             url: "/manajemen-user/tambah-user",
           },
-
-          {
-            title: "Role & Hak Akses",
-            url: "/manajemen-user/role-akses",
-          },
         ],
       },
     ],
@@ -115,11 +110,6 @@ export const NAV_DATA = [
           {
             title: "Pengaturan Akun",
             url: "/pengaturan/pengaturan-akun",
-          },
-
-          {
-            title: "Role & Hak Akses",
-            url: "/pengaturan/role-akses",
           },
         ],
       },

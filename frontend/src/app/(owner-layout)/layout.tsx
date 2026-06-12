@@ -10,23 +10,18 @@ type Props = {
   children: ReactNode;
 };
 
-export default function Layout({
-  children,
-}: Props) {
+export default function Layout({ children }: Props) {
   const router = useRouter();
 
-  const [authorized, setAuthorized] =
-    useState(false);
+  const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
-    const token =
-      localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-    if (
-      !token ||
-      token === "null" ||
-      token === "undefined"
-    ) {
+    const user = localStorage.getItem("user");
+
+    // Belum login
+    if (!token || token === "null" || token === "undefined") {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
 
@@ -34,16 +29,37 @@ export default function Layout({
       return;
     }
 
-    setAuthorized(true);
+    // Data user tidak ada
+    if (!user) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      router.replace("/login");
+      return;
+    }
+
+    try {
+      const userData = JSON.parse(user);
+
+      // Cek role
+      if (userData.role !== "Owner") {
+        router.replace("/login");
+        return;
+      }
+
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAuthorized(true);
+    } catch (error) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      router.replace("/login");
+    }
   }, [router]);
 
   if (!authorized) {
     return null;
   }
 
-  return (
-    <OwnerLayout>
-      {children}
-    </OwnerLayout>
-  );
+  return <OwnerLayout>{children}</OwnerLayout>;
 }

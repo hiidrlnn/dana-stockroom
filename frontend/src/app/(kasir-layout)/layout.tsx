@@ -10,26 +10,20 @@ type Props = {
   children: React.ReactNode;
 };
 
-export default function KasirLayout({
-  children,
-}: Props) {
+export default function KasirLayout({ children }: Props) {
   const router = useRouter();
 
-  const [sidebarOpen, setSidebarOpen] =
-    useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [isAuthorized, setIsAuthorized] =
-    useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    const token =
-      localStorage.getItem("token");
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
 
-    if (
-      !token ||
-      token === "null" ||
-      token === "undefined"
-    ) {
+    if (!token || token === "null" || token === "undefined") {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
 
@@ -37,8 +31,77 @@ export default function KasirLayout({
       return;
     }
 
-    setIsAuthorized(true);
+    if (!user) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      router.replace("/login");
+      return;
+    }
+
+    try {
+      const userData = JSON.parse(user);
+
+      if (userData.role !== "Kasir") {
+        router.replace("/login");
+        return;
+      }
+
+      setIsAuthorized(true);
+    } catch (error) {
+      console.error(error);
+
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      router.replace("/login");
+    } finally {
+      setLoading(false);
+    }
   }, [router]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1280) {
+        setSidebarOpen(false);
+      }
+    };
+
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <div
+        className="
+          flex
+          min-h-screen
+          items-center
+          justify-center
+
+          bg-gray-100
+
+          dark:bg-[#020817]
+        "
+      >
+        <p
+          className="
+            text-gray-500
+
+            dark:text-gray-400
+          "
+        >
+          Memuat Dashboard...
+        </p>
+      </div>
+    );
+  }
 
   if (!isAuthorized) {
     return null;
@@ -47,37 +110,56 @@ export default function KasirLayout({
   return (
     <div
       className="
+        relative
         flex
+
         min-h-screen
+        w-full
+
         bg-gray-100
         transition-colors
+
         dark:bg-[#020817]
       "
     >
       {/* SIDEBAR */}
       <KasirSidebar
         isOpen={sidebarOpen}
-        onClose={() =>
-          setSidebarOpen(false)
-        }
+        onClose={() => setSidebarOpen(false)}
       />
 
       {/* CONTENT */}
-      <div className="flex flex-1 flex-col xl:ml-[280px]">
+      <div
+        className="
+          relative
+
+          flex
+          flex-1
+          flex-col
+
+          min-w-0
+
+          xl:ml-[280px]
+        "
+      >
         {/* HEADER */}
-        <KasirHeader
-          onMenuClick={() =>
-            setSidebarOpen(true)
-          }
-        />
+        <KasirHeader onMenuClick={() => setSidebarOpen(true)} />
 
         {/* PAGE */}
         <main
           className="
+            relative
+
             flex-1
+
+            min-w-0
+
+            p-4
+            sm:p-6
+
             bg-gray-100
-            p-6
             transition-colors
+
             dark:bg-[#020817]
           "
         >

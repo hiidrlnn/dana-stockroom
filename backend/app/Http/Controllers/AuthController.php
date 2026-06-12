@@ -9,41 +9,6 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | REGISTER
-    |--------------------------------------------------------------------------
-    | Digunakan untuk membuat akun baru.
-    */
-    public function register(Request $request)
-    {
-        $request->validate([
-            'nama'     => 'required|string|max:255',
-            'email'    => 'required|email|max:255|unique:users,email',
-            'password' => 'required|string|min:6',
-            'role'     => 'required|in:Admin,Kasir,Owner',
-        ]);
-
-        $user = User::create([
-            'nama'     => $request->nama,
-            'email'    => $request->email,
-            'password' => Hash::make($request->password),
-            'role'     => $request->role,
-            'status'   => 'Aktif',
-        ]);
-
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Registrasi akun berhasil! Silakan login.',
-            'user'    => [
-                'id'     => $user->id,
-                'nama'   => $user->nama,
-                'email'  => $user->email,
-                'role'   => $user->role,
-                'status' => $user->status,
-            ]
-        ], 201);
-    }
 
     /*
     |--------------------------------------------------------------------------

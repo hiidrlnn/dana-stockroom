@@ -1,12 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Card from "@/components/ui/card";
 
 import DataTable from "@/components/tabel/data-table";
 
 import { formatRupiah } from "@/lib/format-rupiah";
+
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 type ReportType = {
   id: number;
@@ -17,56 +20,63 @@ type ReportType = {
   total: number;
   status: string;
   tanggal: string;
+  jam: string;
 };
 
 export default function LaporanPenjualanPage() {
   const [search, setSearch] = useState("");
+  const [reports, setReports] = useState<ReportType[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const reports: ReportType[] = [
-    {
-      id: 1,
-      invoice: "INV-001",
-      customer: "Dirlan",
-      produk: "Nike Air Force 1",
-      metode: "QRIS",
-      total: 1850000,
-      status: "Selesai",
-      tanggal: "10 Mei 2026",
-    },
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/transactions");
 
-    {
-      id: 2,
-      invoice: "INV-002",
-      customer: "Andi",
-      produk: "Adidas Samba",
-      metode: "Cash",
-      total: 1650000,
-      status: "Selesai",
-      tanggal: "09 Mei 2026",
-    },
+        const data = await response.json();
 
-    {
-      id: 3,
-      invoice: "INV-003",
-      customer: "Budi",
-      produk: "New Balance 530",
-      metode: "Transfer",
-      total: 2100000,
-      status: "Pending",
-      tanggal: "08 Mei 2026",
-    },
+        const transformed = data.map((item: any) => {
+          const date = new Date(item.created_at);
 
-    {
-      id: 4,
-      invoice: "INV-004",
-      customer: "Rizky",
-      produk: "Converse High",
-      metode: "QRIS",
-      total: 950000,
-      status: "Dibatalkan",
-      tanggal: "07 Mei 2026",
-    },
-  ];
+          return {
+            id: item.id,
+            invoice: item.invoice_number,
+            customer: item.customer_name,
+
+            produk:
+              item.items?.length > 0
+                ? item.items.map((p: any) => p.nama).join(", ")
+                : "-",
+
+            metode: item.payment_method?.toUpperCase(),
+
+            total: Number(item.total) || 0,
+
+            status: item.status,
+
+            tanggal: date.toLocaleDateString("id-ID", {
+              day: "2-digit",
+              month: "long",
+              year: "numeric",
+            }),
+
+            jam: date.toLocaleTimeString("id-ID", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          };
+        });
+
+        setReports(transformed);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReports();
+  }, []);
 
   /* =========================
      FILTER
@@ -85,7 +95,7 @@ export default function LaporanPenjualanPage() {
   ========================= */
   const totalPendapatan = reports
     .filter((item) => item.status === "Selesai")
-    .reduce((acc, item) => acc + item.total, 0);
+    .reduce((acc, item) => acc + Number(item.total || 0), 0);
 
   const totalTransaksi = reports.length;
 
@@ -96,6 +106,36 @@ export default function LaporanPenjualanPage() {
   const totalDibatalkan = reports.filter(
     (item) => item.status === "Dibatalkan",
   ).length;
+
+  const exportExcel = () => {
+    const data = filteredReports.map((item) => ({
+      Invoice: item.invoice,
+      Customer: item.customer,
+      Produk: item.produk,
+      Metode: item.metode,
+      Total: item.total,
+      Status: item.status,
+      Tanggal: item.tanggal,
+      Jam: `${item.jam} WIB`,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Penjualan");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const file = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+    });
+
+    saveAs(file, `laporan-penjualan-${new Date().getTime()}.xlsx`);
+  };
 
   return (
     <div>
@@ -111,8 +151,17 @@ export default function LaporanPenjualanPage() {
       </div>
 
       {/* STATS */}
-      <div className="mb-6 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-        {/* TOTAL */}
+      <div
+        className="
+        mb-6
+        grid
+        grid-cols-1
+        sm:grid-cols-2
+        xl:grid-cols-4
+        gap-5
+      "
+      >
+        {/* PENDAPATAN */}
         <Card className="border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Total Pendapatan
@@ -126,7 +175,7 @@ export default function LaporanPenjualanPage() {
         {/* TRANSAKSI */}
         <Card className="border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Total Modal
+            Total Transaksi
           </p>
 
           <h2 className="mt-3 text-3xl font-bold text-gray-900 dark:text-white">
@@ -136,7 +185,7 @@ export default function LaporanPenjualanPage() {
 
         {/* PENDING */}
         <Card className="border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Total Omset</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Pending</p>
 
           <h2 className="mt-3 text-3xl font-bold text-yellow-500">
             {totalPending}
@@ -156,9 +205,9 @@ export default function LaporanPenjualanPage() {
       {/* TABLE */}
       <Card className="border border-gray-200 bg-white dark:border-white/10 dark:bg-[#0F172A]">
         {/* TOP */}
-        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-end">
           {/* SEARCH */}
-          <div className="w-full md:max-w-sm">
+          <div className="flex-1">
             <input
               type="text"
               placeholder="Cari invoice, customer, produk..."
@@ -188,7 +237,10 @@ export default function LaporanPenjualanPage() {
 
           {/* EXPORT */}
           <button
+            onClick={exportExcel}
             className="
+              w-full
+              xl:w-auto
               rounded-xl
               bg-sky-500
               px-5
@@ -197,90 +249,319 @@ export default function LaporanPenjualanPage() {
               text-white
               transition
               hover:bg-sky-600
-            ">
-            Export PDF
+            "
+          >
+            Export Excel
           </button>
         </div>
 
-        {/* TABLE */}
-        <div className="overflow-x-auto">
-          <div className="min-w-[1000px]">
-            <DataTable
-              headers={[
-                "Invoice",
-                "Customer",
-                "Produk",
-                "Metode",
-                "Total",
-                "Status",
-                "Tanggal",
-              ]}>
-              {filteredReports.map((item) => (
-                <tr
-                  key={item.id}
-                  className="border-b border-gray-200 dark:border-white/5">
-                  {/* INVOICE */}
-                  <td className="whitespace-nowrap py-5">
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">
-                        {item.invoice}
-                      </p>
+        {/* MOBILE + TABLET */}
+        <div className="grid gap-4 xl:hidden">
+          {filteredReports.length === 0 ? (
+            <Card
+              className="
+    border
+    border-gray-200
+    bg-white
+    shadow-sm
 
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Dana Stockroom
-                      </p>
+    dark:border-white/10
+    dark:bg-[#0F172A]
+  "
+            >
+              <p className="text-center text-gray-500 dark:text-gray-400">
+                Tidak ada data transaksi
+              </p>
+            </Card>
+          ) : (
+            filteredReports.map((item) => (
+              <Card
+                key={item.id}
+                className="
+    border
+    border-gray-200
+    bg-white
+    shadow-sm
+
+    dark:border-white/10
+    dark:bg-[#0F172A]
+  "
+              >
+                <div className="space-y-4 text-sm md:text-base">
+                  <div>
+                    <h3
+                      className="
+    text-lg
+    font-bold
+    text-gray-900
+
+    dark:text-white
+  "
+                    >
+                      {item.invoice}
+                    </h3>
+
+                    <p
+                      className="
+    text-sm
+    text-gray-500
+
+    dark:text-gray-400
+  "
+                    >
+                      Dana Stockroom
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex justify-between gap-3">
+                      <span
+                        className="
+    text-gray-500
+
+    dark:text-gray-400
+  "
+                      >
+                        Customer
+                      </span>
+
+                      <span className="text-right font-medium">
+                        {item.customer}
+                      </span>
                     </div>
-                  </td>
 
-                  {/* CUSTOMER */}
-                  <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
-                    {item.customer}
-                  </td>
+                    <div className="flex justify-between gap-3">
+                      <span
+                        className="
+    text-gray-500
 
-                  {/* PRODUK */}
-                  <td className="whitespace-nowrap py-5 font-medium text-gray-700 dark:text-gray-300">
-                    {item.produk}
-                  </td>
+    dark:text-gray-400
+  "
+                      >
+                        Produk
+                      </span>
 
-                  {/* METODE */}
-                  <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
-                    {item.metode}
-                  </td>
+                      <span
+                        className="
+                max-w-[60%]
+                break-words
+                text-right
+                text-gray-700
 
-                  {/* TOTAL */}
-                  <td className="whitespace-nowrap py-5 font-semibold text-gray-700 dark:text-gray-300">
-                    {formatRupiah(item.total)}
-                  </td>
+                dark:text-gray-300
+              "
+                      >
+                        {item.produk}
+                      </span>
+                    </div>
 
-                  {/* STATUS */}
-                  <td className="whitespace-nowrap py-5">
+                    <div className="flex justify-between gap-3">
+                      <span
+                        className="
+    text-gray-500
+
+    dark:text-gray-400
+  "
+                      >
+                        Metode
+                      </span>
+
+                      <span>
+                        <span
+                          className="
+    text-gray-700
+
+    dark:text-gray-300
+  "
+                        >
+                          <span
+                            className="
+    text-gray-700
+
+    dark:text-gray-300
+  "
+                          >
+                            {item.metode}
+                          </span>
+                        </span>
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between gap-3">
+                      <span
+                        className="
+    text-gray-500
+
+    dark:text-gray-400
+  "
+                      >
+                        Total
+                      </span>
+
+                      <span className="font-bold text-green-400">
+                        {formatRupiah(item.total)}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between gap-3">
+                      <span
+                        className="
+    text-gray-500
+
+    dark:text-gray-400
+  "
+                      >
+                        Tanggal
+                      </span>
+
+                      <div className="text-right">
+                        <p>{item.tanggal}</p>
+
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {item.jam} WIB
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
                     <span
                       className={`
-                        rounded-full
-                        px-3
-                        py-1
-                        text-xs
-                        font-semibold
+                rounded-full
+                px-3
+                py-1
+                text-xs
+                font-semibold
 
-                        ${
-                          item.status === "Selesai"
-                            ? "bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400"
-                            : item.status === "Pending"
-                              ? "bg-yellow-100 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400"
-                              : "bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
-                        }
-                      `}>
+                ${
+                  item.status === "Selesai"
+                    ? "bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400"
+                    : item.status === "Pending"
+                      ? "bg-yellow-100 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400"
+                      : "bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
+                }
+              `}
+                    >
                       {item.status}
                     </span>
-                  </td>
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
 
-                  {/* TANGGAL */}
-                  <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
-                    {item.tanggal}
-                  </td>
-                </tr>
-              ))}
-            </DataTable>
+        {/* DESKTOP */}
+        <div className="hidden xl:block">
+          <div className="overflow-x-auto">
+            <div className="min-w-[1000px]">
+              <DataTable
+                headers={[
+                  "Invoice",
+                  "Customer",
+                  "Produk",
+                  "Metode",
+                  "Total",
+                  "Status",
+                  "Tanggal",
+                ]}
+              >
+                {filteredReports.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="
+                py-10
+                text-center
+                text-gray-500
+                dark:text-gray-400
+              "
+                    >
+                      Tidak ada data transaksi
+                    </td>
+                  </tr>
+                ) : (
+                  filteredReports.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="
+                border-b
+                border-gray-200
+                dark:border-white/5
+              "
+                    >
+                      <td className="whitespace-nowrap py-5">
+                        <div>
+                          <p className="font-semibold text-gray-900 dark:text-white">
+                            {item.invoice}
+                          </p>
+
+                          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            Dana Stockroom
+                          </p>
+                        </div>
+                      </td>
+
+                      <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
+                        {item.customer}
+                      </td>
+
+                      <td className="py-5 text-gray-700 dark:text-gray-300">
+                        {item.produk}
+                      </td>
+
+                      <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
+                        <span
+                          className="
+    text-gray-700
+
+    dark:text-gray-300
+  "
+                        >
+                          {item.metode}
+                        </span>
+                      </td>
+
+                      <td className="whitespace-nowrap py-5 font-semibold text-gray-700 dark:text-gray-300">
+                        {formatRupiah(item.total)}
+                      </td>
+
+                      <td className="whitespace-nowrap py-5">
+                        <span
+                          className={`
+                    rounded-full
+                    px-3
+                    py-1
+                    text-xs
+                    font-semibold
+
+                    ${
+                      item.status === "Selesai"
+                        ? "bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400"
+                        : item.status === "Pending"
+                          ? "bg-yellow-100 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400"
+                          : "bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
+                    }
+                  `}
+                        >
+                          {item.status}
+                        </span>
+                      </td>
+
+                      <td className="whitespace-nowrap py-5 text-gray-700 dark:text-gray-300">
+                        <div>
+                          <p>{item.tanggal}</p>
+
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {item.jam} WIB
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </DataTable>
+            </div>
           </div>
         </div>
       </Card>

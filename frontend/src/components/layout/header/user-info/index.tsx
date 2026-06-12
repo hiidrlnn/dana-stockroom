@@ -89,7 +89,10 @@ export function UserInfo() {
   const firstLetter = user.nama?.charAt(0).toUpperCase() || "A";
 
   return (
-    <div ref={dropdownRef} className="relative z-[9999]">
+    <div
+  ref={dropdownRef}
+  className="relative z-[9999] hidden lg:block"
+>
       {/* BUTTON */}
       <button
         onClick={() => setOpen(!open)}
